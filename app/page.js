@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useAuth } from '@/lib/useAuth';
+import { useAuth, signOutUser } from '@/lib/useAuth';
 import { useManagers, useNurses, useEntriesByYear } from '@/lib/data';
 import SignInScreen from '@/components/SignInScreen';
 import Header from '@/components/Header';
@@ -11,10 +11,22 @@ import NurseDashboardView from '@/components/NurseDashboardView';
 import BonusReportView from '@/components/BonusReportView';
 
 export default function Page() {
-  const { user, loading, profileReady } = useAuth();
+  const { user, loading, profileReady, profileError } = useAuth();
 
   if (loading) return <FullScreenMessage text="Loading…" />;
   if (!user) return <SignInScreen />;
+  if (profileError) {
+    return (
+      <FullScreenMessage text={`Could not set up your account: ${profileError}`}>
+        <button
+          onClick={signOutUser}
+          style={{ marginTop: '16px', background: '#0E5B57', color: '#fff', border: 'none', borderRadius: '10px', padding: '10px 18px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
+        >
+          Sign out and try again
+        </button>
+      </FullScreenMessage>
+    );
+  }
   if (!profileReady) return <FullScreenMessage text="Setting up your account…" />;
 
   return <App uid={user.uid} />;
@@ -101,10 +113,11 @@ function App({ uid }) {
   );
 }
 
-function FullScreenMessage({ text }) {
+function FullScreenMessage({ text, children }) {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F4F1EA', color: '#6b7674', fontSize: '14px' }}>
-      {text}
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#F4F1EA', color: '#6b7674', fontSize: '14px', textAlign: 'center', padding: '24px' }}>
+      <div>{text}</div>
+      {children}
     </div>
   );
 }
