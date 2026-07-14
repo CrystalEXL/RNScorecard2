@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:'Public Sans',system-ui,sans-serif;background:#F4F1EA;color:#1B2A2C;-webkit-font-smoothing:antialiased;}
+  a{color:#0E5B57;text-decoration:none;} a:hover{color:#0a413e;text-decoration:underline;}
+  input,select,button,textarea{font-family:inherit;}
+  ::selection{background:#0E5B57;color:#fff;}
+  ::-webkit-scrollbar{height:10px;width:10px;}
+  ::-webkit-scrollbar-thumb{background:#d8d2c4;border-radius:6px;}
+</style>
+</helmet>
+
+<div style="min-height:100vh;">
+
+  <!-- ===================== LOCK SCREEN ===================== -->
+  <sc-if value="{{ locked }}" hint-placeholder-val="{{ true }}">
+    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#233B3C;">
+      <div style="width:100%;max-width:400px;background:#F4F1EA;border-radius:18px;padding:40px 36px;box-shadow:0 30px 70px rgba(0,0,0,.35);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px;">
+          <div style="width:34px;height:34px;border-radius:9px;background:#0E5B57;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Space Grotesk';font-weight:700;font-size:14px;">RN</div>
+          <div style="font-family:'Space Grotesk';font-weight:600;font-size:16px;letter-spacing:-.01em;">Scorecard</div>
+        </div>
+        <div style="width:52px;height:52px;border-radius:14px;background:#EAE4D6;display:flex;align-items:center;justify-content:center;margin-bottom:18px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0E5B57" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </div>
+        <h1 style="font-family:'Space Grotesk';font-size:24px;font-weight:600;margin:0 0 6px;letter-spacing:-.02em;">Scores are locked</h1>
+        <p style="margin:0 0 22px;font-size:14px;color:#5c6a68;line-height:1.5;">Enter your manager PIN to view and enter nurse scorecards.</p>
+        <input type="password" inputmode="numeric" placeholder="Enter PIN" value="{{ pinInput }}" onChange="{{ onPinInput }}" onKeyDown="{{ onPinKey }}" style="width:100%;padding:14px 16px;font-size:18px;letter-spacing:.3em;font-family:'Space Grotesk';border:1.5px solid #d6cfbf;border-radius:11px;background:#fff;outline:none;text-align:center;margin-bottom:12px;" />
+        <sc-if value="{{ pinError }}" hint-placeholder-val="{{ false }}">
+          <div style="color:#A3331F;font-size:13px;font-weight:600;margin-bottom:12px;">{{ pinError }}</div>
+        </sc-if>
+        <button onClick="{{ onUnlock }}" style="width:100%;padding:14px;font-size:15px;font-weight:600;color:#fff;background:#0E5B57;border:none;border-radius:11px;cursor:pointer;">Unlock</button>
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e3ddce;font-size:12.5px;color:#8a938f;text-align:center;">Demo PIN: <b style="color:#5c6a68;">2468</b></div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===================== APP ===================== -->
+  <sc-if value="{{ unlocked }}" hint-placeholder-val="{{ false }}">
+  <div>
+    <!-- Header -->
+    <header style="background:#233B3C;color:#F4F1EA;">
+      <div style="max-width:1220px;margin:0 auto;padding:16px 28px;display:flex;align-items:center;gap:18px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:32px;height:32px;border-radius:8px;background:#0E5B57;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Space Grotesk';font-weight:700;font-size:13px;">RN</div>
+          <div>
+            <div style="font-family:'Space Grotesk';font-weight:600;font-size:15px;letter-spacing:-.01em;line-height:1;">Scorecard</div>
+            <div style="font-size:11px;color:#9fb2b0;margin-top:3px;">RN Performance · FY{{ year }}</div>
+          </div>
+        </div>
+        <div style="flex:1;"></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+          <span style="color:#9fb2b0;">Manager</span>
+          <select value="{{ selectedManagerId }}" onChange="{{ onManagerChange }}" style="background:#2f4b4c;color:#F4F1EA;border:1px solid #3d5a5b;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:500;outline:none;cursor:pointer;">
+            <option value="all">All managers</option>
+            <sc-for list="{{ managers }}" as="m" hint-placeholder-count="3"><option value="{{ m.id }}">{{ m.name }}</option></sc-for>
+          </select>
+        </div>
+        <button onClick="{{ openPinModal }}" title="Change lock code" style="display:flex;align-items:center;gap:7px;background:transparent;color:#cdd9d7;border:1px solid #3d5a5b;border-radius:9px;padding:8px 13px;font-size:13px;font-weight:500;cursor:pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"></circle><path d="m10.7 12.3 8.3-8.3 2 2-2 2 2 2-2.5 2.5-2-2-1 1"></path></svg>
+          Change PIN
+        </button>
+        <button onClick="{{ onLock }}" style="display:flex;align-items:center;gap:7px;background:transparent;color:#cdd9d7;border:1px solid #3d5a5b;border-radius:9px;padding:8px 13px;font-size:13px;font-weight:500;cursor:pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Lock
+        </button>
+      </div>
+      <!-- Tabs -->
+      <div style="max-width:1220px;margin:0 auto;padding:0 28px;display:flex;gap:4px;">
+        <button onClick="{{ goRoster }}" style="{{ tabRoster }}">Team Roster</button>
+        <button onClick="{{ goEntry }}" style="{{ tabEntry }}">Enter Scores</button>
+        <button onClick="{{ goBonus }}" style="{{ tabBonus }}">Bonus Report</button>
+      </div>
+    </header>
+
+    <!-- Change PIN modal -->
+    <sc-if value="{{ showPinModal }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(20,32,33,.55);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50;" onClick="{{ closePinModal }}">
+      <div onClick="{{ stop }}" style="width:100%;max-width:380px;background:#F4F1EA;border-radius:16px;padding:28px;box-shadow:0 30px 70px rgba(0,0,0,.35);">
+        <div style="font-family:'Space Grotesk';font-weight:600;font-size:19px;margin-bottom:4px;">Change lock code</div>
+        <p style="margin:0 0 20px;font-size:13.5px;color:#6b7674;">Admin only. Enter the admin code to authorize, then set a new lock code.</p>
+        <label style="display:block;font-size:12px;font-weight:600;color:#7b847f;margin-bottom:6px;">Admin code</label>
+        <input type="password" inputmode="numeric" value="{{ pinCur }}" onChange="{{ onPinCur }}" style="width:100%;padding:12px 14px;font-size:15px;font-family:'Space Grotesk';letter-spacing:.15em;border:1.5px solid #d6cfbf;border-radius:10px;background:#fff;outline:none;margin-bottom:14px;" />
+        <label style="display:block;font-size:12px;font-weight:600;color:#7b847f;margin-bottom:6px;">New lock code</label>
+        <input type="password" inputmode="numeric" value="{{ pinNew }}" onChange="{{ onPinNew }}" style="width:100%;padding:12px 14px;font-size:15px;font-family:'Space Grotesk';letter-spacing:.15em;border:1.5px solid #d6cfbf;border-radius:10px;background:#fff;outline:none;margin-bottom:14px;" />
+        <label style="display:block;font-size:12px;font-weight:600;color:#7b847f;margin-bottom:6px;">Confirm new lock code</label>
+        <input type="password" inputmode="numeric" value="{{ pinConf }}" onChange="{{ onPinConf }}" onKeyDown="{{ onPinSaveKey }}" style="width:100%;padding:12px 14px;font-size:15px;font-family:'Space Grotesk';letter-spacing:.15em;border:1.5px solid #d6cfbf;border-radius:10px;background:#fff;outline:none;margin-bottom:6px;" />
+        <sc-if value="{{ pinChangeErr }}" hint-placeholder-val="{{ false }}">
+          <div style="color:#A3331F;font-size:13px;font-weight:600;margin:8px 0 0;">{{ pinChangeErr }}</div>
+        </sc-if>
+        <sc-if value="{{ pinChangeMsg }}" hint-placeholder-val="{{ false }}">
+          <div style="color:#0F6B3E;font-size:13px;font-weight:600;margin:8px 0 0;">{{ pinChangeMsg }}</div>
+        </sc-if>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button onClick="{{ onSavePin }}" style="flex:1;background:#0E5B57;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;">Update PIN</button>
+          <button onClick="{{ closePinModal }}" style="background:transparent;color:#6b7674;border:1.5px solid #ded7c8;border-radius:10px;padding:12px 18px;font-size:14px;font-weight:600;cursor:pointer;">Cancel</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <main style="max-width:1220px;margin:0 auto;padding:30px 28px 70px;">
+
+      <!-- ===================== ROSTER ===================== -->
+      <sc-if value="{{ isRoster }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px;">
+          <div>
+            <h2 style="font-family:'Space Grotesk';font-size:26px;font-weight:600;margin:0 0 4px;letter-spacing:-.02em;">Team Roster</h2>
+            <p style="margin:0;color:#6b7674;font-size:14px;">{{ rosterCount }} nurses · {{ scopeLabel }}</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <div style="position:relative;">
+              <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#98a09d" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4-4"></path></svg>
+              <input type="text" placeholder="Search nurse" value="{{ search }}" onChange="{{ onSearch }}" style="padding:11px 14px 11px 36px;width:250px;border:1.5px solid #ded7c8;border-radius:10px;background:#fff;font-size:14px;outline:none;" />
+            </div>
+            <button onClick="{{ toggleAdd }}" style="display:flex;align-items:center;gap:7px;background:#fff;color:#0E5B57;border:1.5px solid #0E5B57;border-radius:10px;padding:10px 15px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6M22 11h-6"></path></svg>
+              Add Nurse
+            </button>
+            <button onClick="{{ goEntry }}" style="display:flex;align-items:center;gap:7px;background:#0E5B57;color:#fff;border:none;border-radius:10px;padding:11px 16px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+              New Entry
+            </button>
+          </div>
+        </div>
+
+        <!-- Add nurse form -->
+        <sc-if value="{{ showAdd }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#fff;border:1px solid #E7E2D8;border-radius:14px;padding:20px 22px;margin-bottom:16px;">
+          <div style="font-family:'Space Grotesk';font-weight:600;font-size:15px;margin-bottom:14px;">Add a nurse to the roster</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+            <div style="flex:1;min-width:200px;">
+              <label style="display:block;font-size:12px;font-weight:600;color:#7b847f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;">Full name</label>
+              <input type="text" placeholder="e.g. Jordan Ellis" value="{{ newNurse.name }}" onChange="{{ onNewName }}" onKeyDown="{{ onNewKey }}" style="width:100%;padding:11px 13px;border:1.5px solid #ded7c8;border-radius:10px;background:#fff;font-size:14px;outline:none;" />
+            </div>
+            <div style="min-width:180px;">
+              <label style="display:block;font-size:12px;font-weight:600;color:#7b847f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;">Manager</label>
+              <select value="{{ newNurse.managerId }}" onChange="{{ onNewManager }}" style="width:100%;padding:12px 13px;border:1.5px solid #ded7c8;border-radius:10px;background:#fff;font-size:14px;outline:none;cursor:pointer;">
+                <sc-for list="{{ managers }}" as="m" hint-placeholder-count="3"><option value="{{ m.id }}">{{ m.name }}</option></sc-for>
+                <option value="__new__">+ Add new manager…</option>
+              </select>
+            </div>
+            <sc-if value="{{ showNewManager }}" hint-placeholder-val="{{ false }}">
+            <div style="min-width:200px;">
+              <label style="display:block;font-size:12px;font-weight:600;color:#7b847f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;">New manager name</label>
+              <input type="text" placeholder="e.g. Taylor Brooks" value="{{ newNurse.newManagerName }}" onChange="{{ onNewManagerName }}" onKeyDown="{{ onNewKey }}" style="width:100%;padding:11px 13px;border:1.5px solid #ded7c8;border-radius:10px;background:#fff;font-size:14px;outline:none;" />
+            </div>
+            </sc-if>
+            <button onClick="{{ onAddNurse }}" style="background:#0E5B57;color:#fff;border:none;border-radius:10px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer;">Add</button>
+            <button onClick="{{ toggleAdd }}" style="background:transparent;color:#6b7674;border:1.5px solid #ded7c8;border-radius:10px;padding:12px 18px;font-size:14px;font-weight:600;cursor:pointer;">Cancel</button>
+          </div>
+          <sc-if value="{{ addError }}" hint-placeholder-val="{{ false }}">
+            <div style="color:#A3331F;font-size:13px;font-weight:600;margin-top:10px;">{{ addError }}</div>
+          </sc-if>
+        </div>
+        </sc-if>
+
+        <div style="background:#fff;border:1px solid #E7E2D8;border-radius:14px;overflow:hidden;">
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:14px;min-width:820px;">
+              <thead>
+                <tr style="background:#FAF8F2;border-bottom:1px solid #EBE6DB;color:#7b847f;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;">
+                  <th style="text-align:left;padding:13px 20px;font-weight:600;">Nurse</th>
+                  <th style="text-align:left;padding:13px 12px;font-weight:600;">Manager</th>
+                  <th style="text-align:center;padding:13px 12px;font-weight:600;">Latest</th>
+                  <th style="text-align:center;padding:13px 12px;font-weight:600;">YTD Avg</th>
+                  <th style="text-align:center;padding:13px 12px;font-weight:600;">Bonus Qtrs</th>
+                  <th style="text-align:left;padding:13px 20px;font-weight:600;">Status</th>
+                  <th style="padding:13px 16px;font-weight:600;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ rosterRows }}" as="r" hint-placeholder-count="8">
+                  <tr onClick="{{ r.onOpen }}" style="border-bottom:1px solid #F0ECE2;cursor:pointer;">
+                    <td style="padding:13px 20px;">
+                      <div style="display:flex;align-items:center;gap:11px;">
+                        <div style="width:34px;height:34px;border-radius:50%;background:{{ r.avaBg }};color:{{ r.avaFg }};display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;font-family:'Space Grotesk';flex-shrink:0;">{{ r.initials }}</div>
+                        <div>
+                          <div style="font-weight:600;color:#1B2A2C;">{{ r.name }}</div>
+                          <div style="font-size:12px;color:#98a09d;">{{ r.role }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style="padding:13px 12px;color:#4b5654;">{{ r.manager }}</td>
+                    <td style="padding:13px 12px;text-align:center;">
+                      <span style="{{ r.latestStyle }}">{{ r.latest }}</span>
+                    </td>
+                    <td style="padding:13px 12px;text-align:center;">
+                      <span style="{{ r.ytdStyle }}">{{ r.ytd }}</span>
+                    </td>
+                    <td style="padding:13px 12px;text-align:center;font-family:'Space Grotesk';font-weight:500;color:#4b5654;">{{ r.bonusQ }}</td>
+                    <td style="padding:13px 20px;">
+                      <span style="{{ r.statusStyle }}">{{ r.status }}</span>
+                    </td>
+                    <td style="padding:13px 16px;text-align:right;">
+                      <button onClick="{{ r.onRemove }}" title="Remove nurse" style="background:transparent;border:none;color:#b6bcb6;cursor:pointer;padding:6px;border-radius:7px;display:inline-flex;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg>
+                      </button>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <sc-if value="{{ rosterEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:44px;text-align:center;color:#98a09d;font-size:14px;">No nurses match your search.</div>
+          </sc-if>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===================== ENTRY FORM ===================== -->
+      <sc-if value="{{ isEntry }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:940px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:4px;">
+          <h2 style="font-family:'Space Grotesk';font-size:26px;font-weight:600;margin:0;letter-spacing:-.02em;">Enter Monthly Scores</h2>
+          <button onClick="{{ toggleKey }}" style="display:flex;align-items:center;gap:7px;background:#fff;color:#0E5B57;border:1.5px solid #0E5B57;border-radius:10px;padding:9px 14px;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg>
+            Scoring Key
+          </button>
+        </div>
+        <p style="margin:6px 0 20px;color:#6b7674;font-size:14px;">Score each metric 1–5 (or NA). The monthly total is the weighted average, calculated automatically.</p>
+
+        <sc-if value="{{ showKey }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#fff;border:1px solid #E7E2D8;border-radius:14px;overflow:hidden;margin-bottom:22px;">
+          <div style="padding:16px 20px;border-bottom:1px solid #EBE6DB;">
+            <div style="font-family:'Space Grotesk';font-weight:600;font-size:15px;">Scoring Key</div>
+            <div style="font-size:12.5px;color:#98a09d;margin-top:3px;">Raw performance thresholds that map to each score. Blank / TBD cells are not yet defined.</div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:680px;">
+              <thead>
+                <tr style="background:#FAF8F2;border-bottom:1px solid #EBE6DB;">
+                  <th style="text-align:left;padding:11px 20px;font-size:11px;font-weight:600;color:#7b847f;text-transform:uppercase;letter-spacing:.05em;">Metric</th>
+                  <sc-for list="{{ scoreKeyCols }}" as="c" hint-placeholder-count="7"><th style="padding:8px 6px;text-align:center;"><span style="display:inline-block;min-width:38px;padding:3px 8px;border-radius:7px;background:{{ c.bg }};color:{{ c.fg }};font-family:'Space Grotesk';font-weight:600;font-size:12.5px;">{{ c.label }}</span></th></sc-for>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ scoreKeyRows }}" as="row" hint-placeholder-count="6">
+                  <tr style="border-bottom:1px solid #F2EEE4;">
+                    <td style="padding:11px 20px;"><span style="font-weight:600;color:#1B2A2C;">{{ row.label }}</span> <span style="color:#b3b8b2;font-size:12px;">{{ row.weight }}</span></td>
+                    <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="7"><td style="padding:11px 6px;text-align:center;font-family:'Space Grotesk';color:#4b5654;">{{ cell.v }}</td></sc-for>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        </sc-if>
+
+        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:24px;align-items:start;">
+          <!-- Form card -->
+          <div style="background:#fff;border:1px solid #E7E2D8;border-radius:14px;padding:26px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;">
+              <div>
+                <label style="display:block;font-size:12px;font-weight:600;color:#7b847f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;">Nurse</label>
+                <select value="{{ form.nurseId }}" onChange="{{ onEntryNurse }}" style="width:100%;padding:12px 13px;border:1.5px solid #ded7c8;border-radius:10px;background:#fff;font-size:14px;outline:none;cursor:pointer;">
+                  <sc-for list="{{ entryNurses }}" as="n" hint-placeholder-count="6"><option value="{{ n.id }}">{{ n.name }}</option></sc-for>
+                </select>
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:600;color:#7b847f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;">Month · {{ year }}</label>
+                <select value="{{ form.month }}" onChange="{{ onEntryMonth }}" style="width:100%;padding:12px 13px;border:1.5px solid #ded7c8;border-radius:10px;background:#fff;font-size:14px;outline:none;cursor:pointer;">
+                  <sc-for list="{{ months }}" as="mo" hint-placeholder-count="12"><option value="{{ mo.v }}">{{ mo.label }}</option></sc-for>
+                </select>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <sc-for list="{{ entryFields }}" as="f" hint-placeholder-count="6">
+                <div style="display:flex;align-items:center;gap:14px;">
+                  <div style="flex:1;">
+                    <div style="font-weight:600;font-size:14px;color:#1B2A2C;">{{ f.label }}</div>
+                    <div style="font-size:12px;color:#98a09d;">Weight {{ f.weightLabel }}</div>
+                  </div>
+                  <select value="{{ f.value }}" onChange="{{ f.onChange }}" style="width:110px;padding:11px 12px;border:1.5px solid #ded7c8;border-radius:10px;background:#fff;font-size:15px;font-family:'Space Grotesk';font-weight:500;outline:none;cursor:pointer;text-align:center;">
+                    <option value="">—</option>
+                    <sc-for list="{{ scoreOptions }}" as="opt" hint-placeholder-count="7"><option value="{{ opt }}">{{ opt }}</option></sc-for>
+                  </select>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="margin-top:24px;display:flex;align-items:center;gap:14px;">
+              <button onClick="{{ onSaveEntry }}" style="background:#0E5B57;color:#fff;border:none;border-radius:10px;padding:13px 24px;font-size:14px;font-weight:600;cursor:pointer;">Save Scorecard</button>
+              <sc-if value="{{ form.savedMsg }}" hint-placeholder-val="{{ false }}">
+                <span style="color:#0F6B3E;font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:6px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                  {{ form.savedMsg }}
+                </span>
+              </sc-if>
+              <sc-if value="{{ form.errMsg }}" hint-placeholder-val="{{ false }}">
+                <span style="color:#A3331F;font-size:13.5px;font-weight:600;">{{ form.errMsg }}</span>
+              </sc-if>
+            </div>
+          </div>
+
+          <!-- Live total card -->
+          <div style="background:#233B3C;color:#F4F1EA;border-radius:14px;padding:26px;position:sticky;top:20px;">
+            <div style="font-size:12px;font-weight:600;color:#9fb2b0;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Weighted Monthly Total</div>
+            <div style="display:flex;align-items:baseline;gap:8px;">
+              <div style="font-family:'Space Grotesk';font-size:54px;font-weight:600;line-height:1;color:{{ form.liveColor }};">{{ form.liveTotal }}</div>
+              <div style="font-size:16px;color:#9fb2b0;">/ 5.0</div>
+            </div>
+            <div style="{{ form.liveBadgeStyle }}">{{ form.liveBadge }}</div>
+            <div style="margin-top:20px;padding-top:18px;border-top:1px solid #3a5556;">
+              <div style="font-size:12.5px;color:#9fb2b0;line-height:1.6;">Nurses averaging <b style="color:#F4F1EA;">3.5 or higher</b> across a quarter earn the quarterly bonus.</div>
+            </div>
+            <sc-if value="{{ form.existed }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:16px;font-size:12px;color:#e0b96b;background:#3a4f45;padding:9px 12px;border-radius:8px;">Editing an existing entry for this month.</div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===================== NURSE DASHBOARD ===================== -->
+      <sc-if value="{{ isNurse }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <button onClick="{{ goRoster }}" style="display:flex;align-items:center;gap:6px;background:transparent;border:none;color:#0E5B57;font-size:13.5px;font-weight:600;cursor:pointer;padding:0;margin-bottom:16px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+          Back to roster
+        </button>
+
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
+          <div style="width:56px;height:56px;border-radius:50%;background:{{ nurse.avaBg }};color:{{ nurse.avaFg }};display:flex;align-items:center;justify-content:center;font-weight:600;font-size:20px;font-family:'Space Grotesk';">{{ nurse.initials }}</div>
+          <div style="flex:1;">
+            <h2 style="font-family:'Space Grotesk';font-size:26px;font-weight:600;margin:0;letter-spacing:-.02em;">{{ nurse.name }}</h2>
+            <p style="margin:3px 0 0;color:#6b7674;font-size:14px;">Reports to {{ nurse.manager }}</p>
+          </div>
+          <select value="{{ selectedNurseId }}" onChange="{{ onNurseSwitch }}" style="padding:10px 13px;border:1.5px solid #ded7c8;border-radius:10px;background:#fff;font-size:14px;outline:none;cursor:pointer;">
+            <sc-for list="{{ entryNurses }}" as="n" hint-placeholder-count="6"><option value="{{ n.id }}">{{ n.name }}</option></sc-for>
+          </select>
+        </div>
+
+        <!-- Summary stat cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:14px;">
+          <div style="background:#fff;border:1px solid #E7E2D8;border-radius:13px;padding:18px 20px;">
+            <div style="font-size:12px;font-weight:600;color:#7b847f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Latest Month</div>
+            <div style="display:flex;align-items:baseline;gap:6px;"><span style="font-family:'Space Grotesk';font-size:32px;font-weight:600;color:{{ nurse.latestColor }};">{{ nurse.latest }}</span><span style="font-size:13px;color:#98a09d;">{{ nurse.latestMonth }}</span></div>
+          </div>
+          <div style="background:#fff;border:1px solid #E7E2D8;border-radius:13px;padding:18px 20px;">
+            <div style="font-size:12px;font-weight:600;color:#7b847f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">YTD Average</div>
+            <div style="display:flex;align-items:baseline;gap:6px;"><span style="font-family:'Space Grotesk';font-size:32px;font-weight:600;color:{{ nurse.annualColor }};">{{ nurse.annual }}</span><span style="font-size:13px;color:#98a09d;">/ 5.0</span></div>
+          </div>
+          <div style="background:#fff;border:1px solid #E7E2D8;border-radius:13px;padding:18px 20px;">
+            <div style="font-size:12px;font-weight:600;color:#7b847f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Bonus Quarters</div>
+            <div style="display:flex;align-items:baseline;gap:6px;"><span style="font-family:'Space Grotesk';font-size:32px;font-weight:600;color:#1B2A2C;">{{ nurse.bonusCount }}</span><span style="font-size:13px;color:#98a09d;">of {{ nurse.qtrCount }} scored</span></div>
+          </div>
+        </div>
+
+        <!-- Quarterly cards -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;">
+          <sc-for list="{{ nurse.quarters }}" as="q" hint-placeholder-count="4">
+            <div style="{{ q.cardStyle }}">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div style="font-family:'Space Grotesk';font-weight:600;font-size:14px;color:#1B2A2C;">{{ q.label }}</div>
+                <span style="{{ q.badgeStyle }}">{{ q.badge }}</span>
+              </div>
+              <div style="font-family:'Space Grotesk';font-size:30px;font-weight:600;line-height:1;color:{{ q.color }};">{{ q.avg }}</div>
+              <div style="font-size:12px;color:#98a09d;margin-top:6px;">{{ q.monthsLabel }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- Monthly matrix -->
+        <div style="background:#fff;border:1px solid #E7E2D8;border-radius:14px;overflow:hidden;">
+          <div style="padding:16px 20px;border-bottom:1px solid #EBE6DB;font-family:'Space Grotesk';font-weight:600;font-size:15px;">Monthly Breakdown · {{ year }}</div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:13.5px;min-width:760px;">
+              <thead>
+                <tr style="background:#FAF8F2;border-bottom:1px solid #EBE6DB;color:#7b847f;font-size:11px;text-transform:uppercase;letter-spacing:.04em;">
+                  <th style="text-align:left;padding:11px 20px;font-weight:600;">Month</th>
+                  <sc-for list="{{ metricHeads }}" as="h" hint-placeholder-count="6"><th style="text-align:center;padding:11px 8px;font-weight:600;">{{ h.short }}<div style="font-weight:500;color:#b3b8b2;font-size:10px;">{{ h.weight }}</div></th></sc-for>
+                  <th style="text-align:center;padding:11px 20px;font-weight:600;color:#0E5B57;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ nurse.monthRows }}" as="row" hint-placeholder-count="12">
+                  <tr style="border-bottom:1px solid #F2EEE4;{{ row.rowStyle }}">
+                    <td style="padding:11px 20px;font-weight:600;color:#4b5654;">{{ row.label }}</td>
+                    <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="6"><td style="padding:11px 8px;text-align:center;font-family:'Space Grotesk';color:{{ cell.color }};">{{ cell.txt }}</td></sc-for>
+                    <td style="padding:11px 20px;text-align:center;"><span style="{{ row.totalStyle }}">{{ row.total }}</span></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===================== BONUS REPORT ===================== -->
+      <sc-if value="{{ isBonus }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px;">
+          <div>
+            <h2 style="font-family:'Space Grotesk';font-size:26px;font-weight:600;margin:0 0 4px;letter-spacing:-.02em;">Bonus Eligibility</h2>
+            <p style="margin:0;color:#6b7674;font-size:14px;">Quarterly average ≥ 3.5 qualifies for the bonus · {{ scopeLabel }}</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <select value="{{ bonusQuarter }}" onChange="{{ onBonusQuarter }}" style="padding:11px 15px;border:1.5px solid #ded7c8;border-radius:10px;background:#fff;font-size:14px;font-weight:600;outline:none;cursor:pointer;">
+              <option value="1">Q1 · Jan–Mar</option>
+              <option value="2">Q2 · Apr–Jun</option>
+              <option value="3">Q3 · Jul–Sep</option>
+              <option value="4">Q4 · Oct–Dec</option>
+            </select>
+            <button onClick="{{ onExportBonus }}" style="display:flex;align-items:center;gap:7px;background:#0E5B57;color:#fff;border:none;border-radius:10px;padding:11px 16px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg>
+              Export CSV
+            </button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px;">
+          <div style="background:#fff;border:1px solid #E7E2D8;border-radius:13px;padding:18px 20px;">
+            <div style="font-size:12px;font-weight:600;color:#7b847f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Eligible</div>
+            <div style="font-family:'Space Grotesk';font-size:32px;font-weight:600;color:#0F6B3E;">{{ bonusEligible }}</div>
+          </div>
+          <div style="background:#fff;border:1px solid #E7E2D8;border-radius:13px;padding:18px 20px;">
+            <div style="font-size:12px;font-weight:600;color:#7b847f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Not Eligible</div>
+            <div style="font-family:'Space Grotesk';font-size:32px;font-weight:600;color:#A3331F;">{{ bonusNot }}</div>
+          </div>
+          <div style="background:#fff;border:1px solid #E7E2D8;border-radius:13px;padding:18px 20px;">
+            <div style="font-size:12px;font-weight:600;color:#7b847f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Not Yet Scored</div>
+            <div style="font-family:'Space Grotesk';font-size:32px;font-weight:600;color:#98a09d;">{{ bonusPending }}</div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #E7E2D8;border-radius:14px;overflow:hidden;">
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:14px;min-width:640px;">
+              <thead>
+                <tr style="background:#FAF8F2;border-bottom:1px solid #EBE6DB;color:#7b847f;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;">
+                  <th style="text-align:left;padding:13px 20px;font-weight:600;">Nurse</th>
+                  <th style="text-align:center;padding:13px 12px;font-weight:600;">Months Scored</th>
+                  <th style="text-align:center;padding:13px 12px;font-weight:600;">{{ bonusQuarterLabel }} Avg</th>
+                  <th style="text-align:left;padding:13px 20px;font-weight:600;">Bonus</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ bonusRows }}" as="b" hint-placeholder-count="8">
+                  <tr style="border-bottom:1px solid #F0ECE2;">
+                    <td style="padding:13px 20px;">
+                      <div style="display:flex;align-items:center;gap:11px;">
+                        <div style="width:32px;height:32px;border-radius:50%;background:{{ b.avaBg }};color:{{ b.avaFg }};display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;font-family:'Space Grotesk';flex-shrink:0;">{{ b.initials }}</div>
+                        <span style="font-weight:600;">{{ b.name }}</span>
+                      </div>
+                    </td>
+                    <td style="padding:13px 12px;text-align:center;font-family:'Space Grotesk';color:#4b5654;">{{ b.months }}</td>
+                    <td style="padding:13px 12px;text-align:center;"><span style="{{ b.avgStyle }}">{{ b.avg }}</span></td>
+                    <td style="padding:13px 20px;"><span style="{{ b.badgeStyle }}">{{ b.badge }}</span></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+    </main>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:720}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.year = 2026;
+    this.STORE = 'meridian.scorecard.v1';
+    this.metrics = [
+      {key:'radiality',   label:'Reliability',          short:'Rel',  weight:15},
+      {key:'productivity',label:'Productivity',         short:'Prod', weight:20},
+      {key:'quality',     label:'Quality',              short:'Qual', weight:20},
+      {key:'refusal',     label:'Refusal Rate',         short:'Ref',  weight:15},
+      {key:'careplan',    label:'Care Plan Completion', short:'Care', weight:20},
+      {key:'compliance',  label:'Compliance',           short:'Comp', weight:10},
+    ];
+    this.scoreOptions = ['1','2','3','3.5','4','4.5','5','NA'];
+    this.monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    // Raw-metric -> score mapping shown as a reference key
+    this.scoreKeyCols = ['5','4.5','4','3.5','3','2','1'];
+    this.scoreKey = {
+      radiality:    {'5':'100%','4.5':'99%','4':'97%','3.5':'96%','3':'95%','2':'90%','1':'<90%'},
+      productivity: {'5':'TBD','4.5':'TBD','4':'TBD','3.5':'100%','3':'TBD','2':'TBD','1':'TBD'},
+      quality:      {'5':'100%','4.5':'98%','4':'97%','3.5':'95%','3':'93%','2':'92%','1':'<90%'},
+      refusal:      {'5':'≤2%','4.5':'3%','4':'4%','3.5':'5%','3':'6%','2':'7%','1':'≥8%'},
+      careplan:     {'5':'100%','4.5':'98%','4':'96%','3.5':'95%','3':'94%','2':'92%','1':'<92%'},
+      compliance:   {'5':'>100%','4.5':'NA','4':'NA','3.5':'100%','3':'95%','2':'90%','1':'<90%'},
+    };
+    const data = this.load();
+    this.data = data;
+    if(!this.data.adminPin || this.data.adminPin === '1234'){ this.data.adminPin = '4820'; this.save(); }
+    this.state = {
+      locked: true,
+      pinInput: '',
+      pinError: '',
+      view: 'roster',
+      managerId: 'all',
+      search: '',
+      selectedNurseId: data.nurses[0].id,
+      bonusQuarter: '2',
+      form: this.blankForm(data),
+      showKey: false,
+      showAdd: false,
+      addError: '',
+      newNurse: { name:'', unit:'', managerId: data.managers[0].id, newManagerName:'' },
+      showPinModal: false, pinCur:'', pinNew:'', pinConf:'', pinChangeErr:'', pinChangeMsg:'',
+    };
+  }
+
+  /* ---------- persistence ---------- */
+  load(){
+    try{
+      const raw = localStorage.getItem(this.STORE);
+      if(raw){ const d = JSON.parse(raw); if(d && d.nurses && d.nurses.length) return d; }
+    }catch(e){}
+    const d = this.seed();
+    try{ localStorage.setItem(this.STORE, JSON.stringify(d)); }catch(e){}
+    return d;
+  }
+  save(){
+    try{ localStorage.setItem(this.STORE, JSON.stringify(this.data)); }catch(e){}
+  }
+
+  /* ---------- seed ---------- */
+  hash(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619);} return h>>>0; }
+  rng(seed){ let a=seed>>>0; return ()=>{ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  pick(r, weights){
+    const opts=[1,2,3,3.5,4,4.5,5];
+    const total=weights.reduce((a,b)=>a+b,0); let x=r()*total;
+    for(let i=0;i<opts.length;i++){ if(x<weights[i]) return opts[i]; x-=weights[i]; }
+    return opts[opts.length-1];
+  }
+  seed(){
+    const managers=[{id:'m1',name:'Dana Whitfield'},{id:'m2',name:'Marcus Bell'},{id:'m3',name:'Priya Nair'}];
+    const names=['Aisha Robinson','Liam Foster','Sofia Martinez','Noah Kim','Emma Delacroix','Ethan Okafor','Olivia Chen','James Patel','Ava Thompson','Lucas Nguyen','Mia Rodriguez','Benjamin Cole','Grace Abara','Daniel Reyes','Chloe Weber','Samuel Osei','Layla Haddad','Henry Brooks','Zoe Fitzgerald','Isaac Moreno','Nora Schmidt','Elijah Ward','Ruby Callahan','Amara Diallo'];
+    const units=['Med-Surg','ICU','Emergency','Oncology','Pediatrics','Cardiac Care','Orthopedics','Home Health'];
+    const profiles={
+      strong:[0,1,2,6,12,16,10],
+      mid:   [1,3,8,13,12,8,5],
+      weak:  [4,8,15,13,6,3,1],
+    };
+    const nurses = names.map((name,i)=>({
+      id:'n'+(i+1), name,
+      managerId: managers[i%3].id,
+      unit: units[i%units.length],
+    }));
+    const entries={};
+    nurses.forEach((n,i)=>{
+      entries[n.id]={};
+      const prof = (i%5===0)?'weak':(i%3===0?'strong':'mid');
+      const w = profiles[prof];
+      // Jan..Jun scored (current date July 2026)
+      for(let mo=1; mo<=6; mo++){
+        const rec={};
+        this.metrics.forEach(m=>{
+          const r=this.rng(this.hash(n.id+'|'+mo+'|'+m.key));
+          rec[m.key]=this.pick(r, w);
+        });
+        entries[n.id][this.year+'-'+mo]=rec;
+      }
+    });
+    return {pin:'2468', adminPin:'4820', managers, nurses, entries};
+  }
+
+  /* ---------- calc ---------- */
+  computeTotal(vals){
+    if(!vals) return null;
+    let s=0,w=0;
+    for(const m of this.metrics){
+      const v=vals[m.key];
+      if(v==null||v==='') return null;      // incomplete
+      if(v==='NA') continue;                 // excluded from weighting
+      if(isNaN(Number(v))) return null;
+      s+=Number(v)*m.weight; w+=m.weight;
+    }
+    return w? s/w : null;                     // all-NA -> null
+  }
+  monthlyTotal(nurseId, mo){
+    const e=this.data.entries[nurseId]||{};
+    return this.computeTotal(e[this.year+'-'+mo]);
+  }
+  quarterAvg(nurseId, q){
+    const start=(q-1)*3+1; const arr=[];
+    for(let mo=start; mo<start+3; mo++){ const t=this.monthlyTotal(nurseId,mo); if(t!=null) arr.push(t); }
+    if(!arr.length) return {avg:null,count:0};
+    return {avg:arr.reduce((a,b)=>a+b,0)/arr.length, count:arr.length};
+  }
+  annualAvg(nurseId){
+    const arr=[];
+    for(let mo=1;mo<=12;mo++){ const t=this.monthlyTotal(nurseId,mo); if(t!=null) arr.push(t); }
+    if(!arr.length) return null;
+    return arr.reduce((a,b)=>a+b,0)/arr.length;
+  }
+  latestMonth(nurseId){
+    for(let mo=12;mo>=1;mo--){ const t=this.monthlyTotal(nurseId,mo); if(t!=null) return {mo,total:t}; }
+    return null;
+  }
+
+  /* ---------- style helpers ---------- */
+  fmt(v){ return v==null? '—' : (Math.round(v*10)/10).toFixed(1); }
+  rawFmt(v){ if(v==null||v==='') return '—'; if(v==='NA') return 'NA'; return Number.isInteger(Number(v))? String(Number(v)) : String(v); }
+  colorFor(v){
+    if(v==null) return '#98a09d';
+    if(v>=4.5) return '#0F6B3E';
+    if(v>=3.5) return '#0E5B57';
+    if(v>=3)   return '#8A5A12';
+    return '#A3331F';
+  }
+  badge(v){
+    // returns {bg,fg}
+    if(v==null) return {bg:'#EDEAE1',fg:'#98a09d'};
+    if(v>=4.5) return {bg:'#E1F0E7',fg:'#0F6B3E'};
+    if(v>=3.5) return {bg:'#DCEBEA',fg:'#0E5B57'};
+    if(v>=3)   return {bg:'#F5E9D2',fg:'#8A5A12'};
+    return {bg:'#F6E0DA',fg:'#A3331F'};
+  }
+  pill(v, big){
+    const b=this.badge(v);
+    const pad = big? '5px 12px' : '4px 10px';
+    const fs = big? '15px' : '13.5px';
+    return `display:inline-block;padding:${pad};border-radius:8px;background:${b.bg};color:${b.fg};font-family:'Space Grotesk';font-weight:600;font-size:${fs};min-width:44px;text-align:center;`;
+  }
+  initials(name){ return name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+  avatar(id){
+    const palette=[['#DCEBEA','#0E5B57'],['#F0E6D6','#8A5A12'],['#E7E1F0','#5B4B8A'],['#E1F0E7','#0F6B3E'],['#F5E0DA','#A3331F'],['#DEE9F2','#2C5A8A']];
+    const h=this.hash(id)%palette.length; return palette[h];
+  }
+
+  /* ---------- form ---------- */
+  blankForm(data){
+    const scope = data.nurses;
+    const nurseId = scope[0].id;
+    const f={nurseId, month:'6', savedMsg:'', errMsg:'', existed:false};
+    this.metrics.forEach(m=>f[m.key]='');
+    return this.fillForm(f, data);
+  }
+  fillForm(f, data){
+    const e=(data||this.data).entries[f.nurseId]||{};
+    const rec=e[this.year+'-'+f.month];
+    const nf={nurseId:f.nurseId, month:f.month, savedMsg:'', errMsg:'', existed:!!rec};
+    this.metrics.forEach(m=>{ nf[m.key]= rec? String(rec[m.key]) : ''; });
+    return nf;
+  }
+
+  /* ---------- scope ---------- */
+  scopeNurses(){
+    const mid=this.state.managerId;
+    return this.data.nurses.filter(n=> mid==='all' || n.managerId===mid);
+  }
+  managerName(id){ const m=this.data.managers.find(x=>x.id===id); return m? m.name : '—'; }
+
+  /* ---------- handlers ---------- */
+  onPinInput = (e)=> this.setState({pinInput:e.target.value, pinError:''});
+  onPinKey = (e)=>{ if(e.key==='Enter') this.onUnlock(); };
+  onUnlock = ()=>{
+    if(this.state.pinInput === this.data.pin){ this.setState({locked:false, pinInput:'', pinError:''}); }
+    else this.setState({pinError:'Incorrect PIN. Try again.'});
+  };
+  onLock = ()=> this.setState({locked:true, pinInput:''});
+
+  stop = (e)=> e.stopPropagation();
+  openPinModal = ()=> this.setState({showPinModal:true, pinCur:'', pinNew:'', pinConf:'', pinChangeErr:'', pinChangeMsg:''});
+  closePinModal = ()=> this.setState({showPinModal:false});
+  onPinCur = (e)=> this.setState({pinCur:e.target.value, pinChangeErr:'', pinChangeMsg:''});
+  onPinNew = (e)=> this.setState({pinNew:e.target.value, pinChangeErr:'', pinChangeMsg:''});
+  onPinConf = (e)=> this.setState({pinConf:e.target.value, pinChangeErr:'', pinChangeMsg:''});
+  onPinSaveKey = (e)=>{ if(e.key==='Enter') this.onSavePin(); };
+  onSavePin = ()=>{
+    const {pinCur, pinNew, pinConf}=this.state;
+    if(pinCur !== this.data.adminPin){ this.setState({pinChangeErr:'Admin code is incorrect. Only an admin can change the lock code.', pinChangeMsg:''}); return; }
+    if(!/^\d{4,}$/.test(pinNew.trim())){ this.setState({pinChangeErr:'New lock code must be at least 4 digits.', pinChangeMsg:''}); return; }
+    if(pinNew !== pinConf){ this.setState({pinChangeErr:'New lock codes do not match.', pinChangeMsg:''}); return; }
+    this.data.pin = pinNew.trim();
+    this.save();
+    this.setState({pinChangeErr:'', pinChangeMsg:'PIN updated.', pinCur:'', pinNew:'', pinConf:''});
+    setTimeout(()=>{ this.setState({showPinModal:false, pinChangeMsg:''}); }, 1200);
+  };
+
+  onManagerChange = (e)=>{
+    const managerId=e.target.value;
+    const scope=this.data.nurses.filter(n=> managerId==='all'||n.managerId===managerId);
+    const sel = scope.length? scope[0].id : this.state.selectedNurseId;
+    const form=this.fillForm({...this.state.form, nurseId:sel}, this.data);
+    this.setState({managerId, selectedNurseId:sel, form});
+  };
+  onSearch = (e)=> this.setState({search:e.target.value});
+  goRoster = ()=> this.setState({view:'roster'});
+  goEntry = ()=> this.setState({view:'entry', form:this.fillForm(this.state.form, this.data)});
+  goBonus = ()=> this.setState({view:'bonus'});
+  openNurse = (id)=> ()=> this.setState({view:'nurse', selectedNurseId:id});
+  onNurseSwitch = (e)=> this.setState({selectedNurseId:e.target.value});
+  onBonusQuarter = (e)=> this.setState({bonusQuarter:e.target.value});
+  onExportBonus = ()=>{
+    const bq=Number(this.state.bonusQuarter);
+    const bqLabels=['','Q1 (Jan-Mar)','Q2 (Apr-Jun)','Q3 (Jul-Sep)','Q4 (Oct-Dec)'];
+    const scope=this.scopeNurses();
+    const esc=(v)=>{ v=String(v==null?'':v); return /[",\n]/.test(v)? '"'+v.replace(/"/g,'""')+'"' : v; };
+    const rows=[['Nurse','Manager','Quarter','Months Scored','Quarterly Average','Bonus Eligible']];
+    scope.map(n=>{
+      const qa=this.quarterAvg(n.id,bq);
+      const has=qa.count>0; const elig=has&&qa.avg>=3.5;
+      return { name:n.name, manager:this.managerName(n.managerId),
+        months:has?(qa.count+'/3'):'0/3', avg: qa.avg==null?'':this.fmt(qa.avg),
+        status: !has?'Pending':(elig?'Eligible':'Not eligible'), sort: has?qa.avg:-1 };
+    }).sort((a,b)=>b.sort-a.sort).forEach(r=>{
+      rows.push([r.name, r.manager, bqLabels[bq], r.months, r.avg, r.status]);
+    });
+    const csv=rows.map(r=>r.map(esc).join(',')).join('\r\n');
+    const blob=new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='RN-Scorecard-Bonus-Q'+bq+'-'+this.year+'.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  };
+
+  toggleKey = ()=> this.setState(s=>({showKey:!s.showKey}));
+  toggleAdd = ()=> this.setState(s=>({
+    showAdd:!s.showAdd, addError:'',
+    newNurse:{ name:'', unit:'', managerId: (s.managerId!=='all'? s.managerId : this.data.managers[0].id), newManagerName:'' },
+  }));
+  onNewName = (e)=> this.setState(s=>({newNurse:{...s.newNurse, name:e.target.value}, addError:''}));
+  onNewUnit = (e)=> this.setState(s=>({newNurse:{...s.newNurse, unit:e.target.value}, addError:''}));
+  onNewManager = (e)=> this.setState(s=>({newNurse:{...s.newNurse, managerId:e.target.value}, addError:''}));
+  onNewManagerName = (e)=> this.setState(s=>({newNurse:{...s.newNurse, newManagerName:e.target.value}, addError:''}));
+  onNewKey = (e)=>{ if(e.key==='Enter') this.onAddNurse(); };
+  onAddNurse = ()=>{
+    const nn=this.state.newNurse;
+    if(!nn.name.trim()){ this.setState({addError:'Enter a nurse name.'}); return; }
+    let managerId=nn.managerId;
+    if(managerId==='__new__'){
+      if(!nn.newManagerName.trim()){ this.setState({addError:'Enter the new manager name.'}); return; }
+      const mnums=this.data.managers.map(m=>parseInt(String(m.id).replace(/\D/g,''),10)||0);
+      managerId='m'+((mnums.length?Math.max(...mnums):0)+1);
+      this.data.managers.push({ id:managerId, name:nn.newManagerName.trim() });
+    }
+    const nums=this.data.nurses.map(n=>parseInt(String(n.id).replace(/\D/g,''),10)||0);
+    const id='n'+((nums.length?Math.max(...nums):0)+1);
+    this.data.nurses.push({ id, name:nn.name.trim(), unit:nn.unit.trim()||'Unassigned', managerId });
+    this.data.entries[id]={};
+    this.save();
+    this.setState({ showAdd:false, addError:'', newNurse:{name:'',unit:'',managerId:this.data.managers[0].id,newManagerName:''} });
+  };
+  removeNurse = (id)=>{
+    this.data.nurses = this.data.nurses.filter(n=>n.id!==id);
+    delete this.data.entries[id];
+    this.save();
+    this.setState(s=>({ selectedNurseId: s.selectedNurseId===id ? (this.data.nurses[0]&&this.data.nurses[0].id) : s.selectedNurseId }));
+  };
+
+  onEntryNurse = (e)=>{ const form=this.fillForm({...this.state.form, nurseId:e.target.value}, this.data); this.setState({form}); };
+  onEntryMonth = (e)=>{ const form=this.fillForm({...this.state.form, month:e.target.value}, this.data); this.setState({form}); };
+  setMetric = (key)=> (e)=>{ this.setState(s=>({form:{...s.form, [key]:e.target.value, savedMsg:'', errMsg:''}})); };
+  onSaveEntry = ()=>{
+    const f=this.state.form;
+    for(const m of this.metrics){ if(!f[m.key]){ this.setState(s=>({form:{...s.form, errMsg:'Please score every metric before saving.', savedMsg:''}})); return; } }
+    const rec={}; this.metrics.forEach(m=> rec[m.key]= f[m.key]==='NA' ? 'NA' : Number(f[m.key]));
+    if(!this.data.entries[f.nurseId]) this.data.entries[f.nurseId]={};
+    this.data.entries[f.nurseId][this.year+'-'+f.month]=rec;
+    this.save();
+    const total=this.computeTotal(rec);
+    const nurse=this.data.nurses.find(n=>n.id===f.nurseId);
+    this.setState(s=>({form:{...s.form, existed:true, savedMsg:`Saved — ${nurse.name.split(' ')[0]} scored ${this.fmt(total)} for ${this.monthNames[Number(f.month)-1]}.`, errMsg:''}}));
+  };
+
+  /* ---------- render ---------- */
+  tabStyle(active){
+    const base='padding:11px 18px;font-size:14px;font-weight:600;border:none;background:transparent;cursor:pointer;border-radius:9px 9px 0 0;';
+    return active
+      ? base+'color:#233B3C;background:#F4F1EA;'
+      : base+'color:#9fb2b0;';
+  }
+
+  renderVals(){
+    const s=this.state, d=this.data;
+    const scope=this.scopeNurses();
+    const scopeLabel = s.managerId==='all' ? 'All managers' : this.managerName(s.managerId);
+
+    /* roster rows */
+    const q=(txt)=>txt.toLowerCase();
+    const search=q(s.search||'');
+    let filtered=scope.filter(n=> !search || q(n.name).includes(search));
+    const rosterRows=filtered.map(n=>{
+      const lm=this.latestMonth(n.id);
+      const ytd=this.annualAvg(n.id);
+      let bonusOK=0, bonusScored=0;
+      for(let qi=1;qi<=4;qi++){ const qa=this.quarterAvg(n.id,qi); if(qa.count>0){ bonusScored++; if(qa.avg>=3.5) bonusOK++; } }
+      const [avaBg,avaFg]=this.avatar(n.id);
+      const statusOK = ytd!=null && ytd>=3.5;
+      return {
+        id:n.id, name:n.name, unit:n.unit, manager:this.managerName(n.managerId),
+        role:'Registered Nurse', initials:this.initials(n.name), avaBg, avaFg,
+        latest: lm? this.fmt(lm.total) : '—',
+        latestStyle: this.pill(lm? lm.total : null),
+        ytd: this.fmt(ytd), ytdStyle:this.pill(ytd),
+        bonusQ: bonusScored? (bonusOK+'/'+bonusScored) : '—',
+        status: ytd==null? 'No data' : (statusOK? 'On track' : 'Below target'),
+        statusStyle: ytd==null
+          ? 'display:inline-block;padding:4px 11px;border-radius:20px;background:#EDEAE1;color:#98a09d;font-size:12.5px;font-weight:600;'
+          : (statusOK
+             ? 'display:inline-block;padding:4px 11px;border-radius:20px;background:#E1F0E7;color:#0F6B3E;font-size:12.5px;font-weight:600;'
+             : 'display:inline-block;padding:4px 11px;border-radius:20px;background:#F6E0DA;color:#A3331F;font-size:12.5px;font-weight:600;'),
+        onOpen: this.openNurse(n.id),
+        onRemove: (e)=>{ e.stopPropagation(); if(window.confirm('Remove '+n.name+' from the roster? This deletes their scores.')) this.removeNurse(n.id); },
+      };
+    });
+
+    /* entry */
+    const entryNurses=scope.map(n=>({id:n.id, name:n.name}));
+    const entryFields=this.metrics.map(m=>({
+      key:m.key, label:m.label, weightLabel:m.weight+'%',
+      value:s.form[m.key]||'', onChange:this.setMetric(m.key),
+    }));
+    const months=this.monthNames.map((nm,i)=>({v:String(i+1), label:nm}));
+    const liveTotal=this.computeTotal(s.form);
+    const lb=this.badge(liveTotal);
+    const liveBadgeLabel = liveTotal==null? 'Complete all 6 metrics'
+      : (liveTotal>=3.5? 'Bonus eligible pace' : 'Below bonus threshold');
+    const form={
+      ...s.form,
+      liveTotal:this.fmt(liveTotal),
+      liveColor: liveTotal==null? '#5f7a78' : (liveTotal>=4.5?'#7BD6A0':liveTotal>=3.5?'#8FD3CE':liveTotal>=3?'#E0B96B':'#E39A8C'),
+      liveBadge: liveBadgeLabel,
+      liveBadgeStyle: liveTotal==null
+        ? 'display:inline-block;margin-top:14px;padding:5px 12px;border-radius:8px;background:#33504f;color:#9fb2b0;font-size:12.5px;font-weight:600;'
+        : (liveTotal>=3.5
+           ? 'display:inline-block;margin-top:14px;padding:5px 12px;border-radius:8px;background:#1c4d3a;color:#8FE3B8;font-size:12.5px;font-weight:600;'
+           : 'display:inline-block;margin-top:14px;padding:5px 12px;border-radius:8px;background:#4d2c26;color:#E39A8C;font-size:12.5px;font-weight:600;'),
+    };
+
+    /* nurse dashboard */
+    const nObj=d.nurses.find(n=>n.id===s.selectedNurseId)||d.nurses[0];
+    const [navaBg,navaFg]=this.avatar(nObj.id);
+    const metricHeads=this.metrics.map(m=>({short:m.short, weight:m.weight+'%'}));
+    const monthRows=this.monthNames.map((nm,i)=>{
+      const mo=i+1; const rec=(d.entries[nObj.id]||{})[this.year+'-'+mo];
+      const total=this.computeTotal(rec);
+      const cells=this.metrics.map(m=>({
+        txt: rec? this.rawFmt(rec[m.key]) : '—',
+        color: rec? (rec[m.key]==='NA' ? '#98a09d' : this.colorFor(Number(rec[m.key]))) : '#c4c8c2',
+      }));
+      return {
+        label:nm.slice(0,3), cells,
+        total: this.fmt(total), totalStyle:this.pill(total),
+        rowStyle: rec? '' : 'opacity:.5;',
+      };
+    });
+    const quarters=[1,2,3,4].map(qi=>{
+      const qa=this.quarterAvg(nObj.id,qi);
+      const elig= qa.avg!=null && qa.avg>=3.5;
+      const has = qa.count>0;
+      return {
+        label:'Q'+qi, avg:this.fmt(qa.avg), color:this.colorFor(qa.avg),
+        monthsLabel: has? (qa.count+' of 3 months') : 'Not scored',
+        badge: !has? '—' : (elig? 'Bonus' : 'No bonus'),
+        badgeStyle: !has
+          ? 'padding:3px 9px;border-radius:20px;background:#EDEAE1;color:#98a09d;font-size:11px;font-weight:600;'
+          : (elig
+             ? 'padding:3px 9px;border-radius:20px;background:#E1F0E7;color:#0F6B3E;font-size:11px;font-weight:600;'
+             : 'padding:3px 9px;border-radius:20px;background:#F6E0DA;color:#A3331F;font-size:11px;font-weight:600;'),
+        cardStyle: 'background:#fff;border:1px solid '+(elig&&has?'#BADEC9':'#E7E2D8')+';border-radius:13px;padding:16px 18px;'+(elig&&has?'box-shadow:0 0 0 1px #BADEC9 inset;':''),
+      };
+    });
+    let bonusCount=0, qtrCount=0;
+    for(let qi=1;qi<=4;qi++){ const qa=this.quarterAvg(nObj.id,qi); if(qa.count>0){ qtrCount++; if(qa.avg>=3.5) bonusCount++; } }
+    const lmN=this.latestMonth(nObj.id); const annN=this.annualAvg(nObj.id);
+    const nurse={
+      name:nObj.name, unit:nObj.unit, manager:this.managerName(nObj.managerId),
+      initials:this.initials(nObj.name), avaBg:navaBg, avaFg:navaFg,
+      latest: lmN? this.fmt(lmN.total):'—', latestColor:this.colorFor(lmN?lmN.total:null),
+      latestMonth: lmN? this.monthNames[lmN.mo-1] : '—',
+      annual:this.fmt(annN), annualColor:this.colorFor(annN),
+      bonusCount, qtrCount, monthRows, quarters,
+    };
+
+    /* bonus report */
+    const bq=Number(s.bonusQuarter);
+    const bqLabels=['','Jan–Mar','Apr–Jun','Jul–Sep','Oct–Dec'];
+    let bEl=0,bNot=0,bPend=0;
+    let bonusRows=scope.map(n=>{
+      const qa=this.quarterAvg(n.id,bq);
+      const [avaBg,avaFg]=this.avatar(n.id);
+      const has=qa.count>0; const elig=has&&qa.avg>=3.5;
+      if(!has) bPend++; else if(elig) bEl++; else bNot++;
+      return {
+        _sort: has? qa.avg : -1, _has:has, _elig:elig,
+        id:n.id, name:n.name, unit:n.unit, initials:this.initials(n.name), avaBg, avaFg,
+        months: has? (qa.count+'/3') : '0/3',
+        avg: this.fmt(qa.avg), avgStyle:this.pill(qa.avg),
+        badge: !has? 'Pending' : (elig? 'Eligible' : 'Not eligible'),
+        badgeStyle: !has
+          ? 'display:inline-block;padding:4px 12px;border-radius:20px;background:#EDEAE1;color:#98a09d;font-size:12.5px;font-weight:600;'
+          : (elig
+             ? 'display:inline-block;padding:4px 12px;border-radius:20px;background:#E1F0E7;color:#0F6B3E;font-size:12.5px;font-weight:600;'
+             : 'display:inline-block;padding:4px 12px;border-radius:20px;background:#F6E0DA;color:#A3331F;font-size:12.5px;font-weight:600;'),
+      };
+    }).sort((a,b)=> b._sort - a._sort);
+
+    return {
+      locked:s.locked, unlocked:!s.locked,
+      pinInput:s.pinInput, pinError:s.pinError,
+      onPinInput:this.onPinInput, onPinKey:this.onPinKey, onUnlock:this.onUnlock, onLock:this.onLock,
+      showPinModal:s.showPinModal, openPinModal:this.openPinModal, closePinModal:this.closePinModal, stop:this.stop,
+      pinCur:s.pinCur, pinNew:s.pinNew, pinConf:s.pinConf, pinChangeErr:s.pinChangeErr, pinChangeMsg:s.pinChangeMsg,
+      onPinCur:this.onPinCur, onPinNew:this.onPinNew, onPinConf:this.onPinConf, onPinSaveKey:this.onPinSaveKey, onSavePin:this.onSavePin,
+      year:this.year,
+      managers:d.managers, selectedManagerId:s.managerId, onManagerChange:this.onManagerChange,
+      scopeLabel,
+      view:s.view, isRoster:s.view==='roster', isEntry:s.view==='entry', isNurse:s.view==='nurse', isBonus:s.view==='bonus',
+      goRoster:this.goRoster, goEntry:this.goEntry, goBonus:this.goBonus,
+      tabRoster:this.tabStyle(s.view==='roster'),
+      tabEntry:this.tabStyle(s.view==='entry'),
+      tabBonus:this.tabStyle(s.view==='bonus'),
+      search:s.search, onSearch:this.onSearch,
+      showAdd:s.showAdd, addError:s.addError, newNurse:s.newNurse,
+      toggleAdd:this.toggleAdd, onNewName:this.onNewName, onNewUnit:this.onNewUnit,
+      onNewManager:this.onNewManager, onNewManagerName:this.onNewManagerName,
+      showNewManager: s.newNurse.managerId==='__new__',
+      onNewKey:this.onNewKey, onAddNurse:this.onAddNurse,
+      rosterRows, rosterCount:filtered.length, rosterEmpty:filtered.length===0,
+      entryNurses, entryFields, months, scoreOptions:this.scoreOptions, form,
+      showKey:s.showKey, toggleKey:this.toggleKey,
+      scoreKeyCols: this.scoreKeyCols.map(c=>{ const b=this.badge(Number(c)); return {label:c, bg:b.bg, fg:b.fg}; }),
+      scoreKeyRows: this.metrics.map(m=>({
+        label:m.label, weight:m.weight+'%',
+        cells: this.scoreKeyCols.map(c=>({ v:(this.scoreKey[m.key]&&this.scoreKey[m.key][c])||'—' })),
+      })),
+      onEntryNurse:this.onEntryNurse, onEntryMonth:this.onEntryMonth, onSaveEntry:this.onSaveEntry,
+      selectedNurseId:s.selectedNurseId, onNurseSwitch:this.onNurseSwitch, nurse, metricHeads,
+      bonusQuarter:s.bonusQuarter, onBonusQuarter:this.onBonusQuarter, onExportBonus:this.onExportBonus,
+      bonusQuarterLabel:bqLabels[bq], bonusRows,
+      bonusEligible:bEl, bonusNot:bNot, bonusPending:bPend,
+    };
+  }
+}
+</script>
+</body>
+</html>

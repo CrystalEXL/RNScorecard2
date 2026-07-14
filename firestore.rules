@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && request.auth.token.admin == true; }
+
+    // Every signed-in user is a "manager" profile, auto-created on first sign-in.
+    // A manager may only create/update their own profile document.
+    match /managers/{uid} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && request.auth.uid == uid;
+      allow delete: if isAdmin();
+    }
+
+    match /nurses/{nurseId} {
+      // Any signed-in manager can see the shared roster (single shared portal),
+      // but only the owning manager (or an admin) can create/edit/deactivate.
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.managerId == request.auth.uid;
+      allow update, delete: if signedIn() &&
+        (resource.data.managerId == request.auth.uid || isAdmin());
+
+      match /entries/{entryId} {
+        allow read: if signedIn();
+        allow write: if signedIn() && (
+          get(/databases/$(database)/documents/nurses/$(nurseId)).data.managerId == request.auth.uid ||
+          isAdmin()
+        );
+      }
+    }
+
+    // Reserved for future admin-only settings. No documents live here yet.
+    match /orgSettings/{doc} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+  }
+}
