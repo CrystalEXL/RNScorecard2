@@ -43,9 +43,9 @@ export default function Page() {
 
 function App({ uid }) {
   const managers = useManagers();
-  const { nurses, loaded: nursesLoaded } = useNurses();
+  const { nurses, loaded: nursesLoaded, error: nursesError } = useNurses();
   const [year, setYear] = useState(DEFAULT_YEAR);
-  const entriesByNurse = useEntriesByYear(year);
+  const { entriesByNurse, error: entriesError } = useEntriesByYear(year);
 
   const [view, setView] = useState('roster');
   const [managerId, setManagerId] = useState('all');
@@ -69,6 +69,11 @@ function App({ uid }) {
     <div>
       <Header managers={managers} managerId={managerId} onManagerChange={setManagerId} view={view} onNavigate={setView} year={year} onYearChange={setYear} />
       <main style={{ maxWidth: '1220px', margin: '0 auto', padding: '30px 28px 70px' }}>
+        {(nursesError || entriesError) && (
+          <div style={{ background: '#F6E0DA', color: '#A3331F', border: '1px solid #e0b3a6', borderRadius: '10px', padding: '12px 16px', fontSize: '13.5px', fontWeight: 600, marginBottom: '20px' }}>
+            {nursesError || entriesError}
+          </div>
+        )}
         {view === 'roster' && (
           <RosterView
             nurses={scopeNurses}
