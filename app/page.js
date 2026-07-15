@@ -45,7 +45,8 @@ function App({ uid }) {
   const managers = useManagers();
   const { nurses, loaded: nursesLoaded, error: nursesError } = useNurses();
   const [year, setYear] = useState(DEFAULT_YEAR);
-  const { entriesByNurse, error: entriesError } = useEntriesByYear(year);
+  const nurseIds = useMemo(() => nurses.map((n) => n.id), [nurses]);
+  const { entriesByNurse, error: entriesError } = useEntriesByYear(nurseIds, year);
 
   const [view, setView] = useState('roster');
   const [managerId, setManagerId] = useState('all');
