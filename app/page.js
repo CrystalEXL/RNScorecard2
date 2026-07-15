@@ -11,23 +11,31 @@ import NurseDashboardView from '@/components/NurseDashboardView';
 import BonusReportView from '@/components/BonusReportView';
 
 export default function Page() {
-  const { user, loading, profileReady, profileError } = useAuth();
+  const { user, loading, profileReady, profileError, retryProfileSetup } = useAuth();
 
   if (loading) return <FullScreenMessage text="Loading…" />;
   if (!user) return <SignInScreen />;
   if (profileError) {
     return (
       <FullScreenMessage text={`Could not set up your account: ${profileError}`}>
-        <button
-          onClick={signOutUser}
-          style={{ marginTop: '16px', background: '#0E5B57', color: '#fff', border: 'none', borderRadius: '10px', padding: '10px 18px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
-        >
-          Sign out and try again
-        </button>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+          <button
+            onClick={retryProfileSetup}
+            style={{ background: '#0E5B57', color: '#fff', border: 'none', borderRadius: '10px', padding: '10px 18px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
+          >
+            Try again
+          </button>
+          <button
+            onClick={signOutUser}
+            style={{ background: 'transparent', color: '#6b7674', border: '1.5px solid #ded7c8', borderRadius: '10px', padding: '10px 18px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
+          >
+            Sign out
+          </button>
+        </div>
       </FullScreenMessage>
     );
   }
-  if (!profileReady) return <FullScreenMessage text="Setting up your account…" />;
+  if (!profileReady) return <FullScreenMessage text="Setting up your account… (this can take up to 20 seconds on a slow connection)" />;
 
   return <App uid={user.uid} />;
 }
