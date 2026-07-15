@@ -251,7 +251,7 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
         {showKey && ' The scoring key is open on the left for reference.'}
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: showKey ? '1fr 1fr' : '1.4fr 1fr', gap: '24px', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: showKey ? '2fr 1fr' : '1.4fr 1fr', gap: '24px', alignItems: 'start' }}>
         {showKey && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '20px', maxHeight: 'calc(100vh - 40px)', overflowY: 'auto' }}>
             {scoringKeyPanels}
