@@ -5,7 +5,7 @@ import {
   METRICS, SCORE_OPTIONS, MONTH_NAMES, SCORE_KEY_COLS, SCORE_KEY,
   computeTotal, fmt, badge, entryId,
 } from '@/lib/scoring';
-import { saveEntry } from '@/lib/data';
+import { saveEntry, deleteEntry } from '@/lib/data';
 
 const selectBase = {
   width: '100%', padding: '12px 13px', border: '1.5px solid #ded7c8', borderRadius: '10px',
@@ -32,6 +32,7 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
   const [savedMsg, setSavedMsg] = useState('');
   const [errMsg, setErrMsg] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (initialNurseId) setNurseId(initialNurseId);
@@ -84,6 +85,31 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
       setErrMsg(e?.message || 'Could not save. Try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const onClear = () => {
+    setScores(blankScores());
+    setSavedMsg('');
+    setErrMsg('');
+  };
+
+  const onDelete = async () => {
+    const nurse = nurses.find((n) => n.id === nurseId);
+    if (!window.confirm(`Delete ${(nurse?.name || 'this nurse')}'s scorecard for ${MONTH_NAMES[Number(month) - 1]} ${year}? This can't be undone.`)) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await deleteEntry({ nurseId, year, month });
+      setScores(blankScores());
+      setExisted(false);
+      setErrMsg('');
+      setSavedMsg(`Deleted the scorecard for ${MONTH_NAMES[Number(month) - 1]} ${year}.`);
+    } catch (e) {
+      setErrMsg(e?.message || 'Could not delete. Try again.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -188,9 +214,12 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
             ))}
           </div>
 
-          <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
             <button onClick={onSave} disabled={saving} style={{ background: '#0E5B57', color: '#fff', border: 'none', borderRadius: '10px', padding: '13px 24px', fontSize: '14px', fontWeight: 600, cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.7 : 1 }}>
               {saving ? 'Saving…' : 'Save Scorecard'}
+            </button>
+            <button onClick={onClear} style={{ background: 'transparent', color: '#6b7674', border: '1.5px solid #ded7c8', borderRadius: '10px', padding: '13px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
+              Clear
             </button>
             {savedMsg && (
               <span style={{ color: '#0F6B3E', fontSize: '13.5px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -215,9 +244,18 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
             </div>
           </div>
           {existed && (
-            <div style={{ marginTop: '16px', fontSize: '12px', color: '#e0b96b', background: '#3a4f45', padding: '9px 12px', borderRadius: '8px' }}>
-              Editing an existing entry for this month.
-            </div>
+            <>
+              <div style={{ marginTop: '16px', fontSize: '12px', color: '#e0b96b', background: '#3a4f45', padding: '9px 12px', borderRadius: '8px' }}>
+                Editing an existing entry for this month.
+              </div>
+              <button
+                onClick={onDelete}
+                disabled={deleting}
+                style={{ marginTop: '10px', width: '100%', background: 'transparent', color: '#E39A8C', border: '1.5px solid #5a3d38', borderRadius: '8px', padding: '10px 12px', fontSize: '12.5px', fontWeight: 600, cursor: deleting ? 'default' : 'pointer', opacity: deleting ? 0.7 : 1 }}
+              >
+                {deleting ? 'Deleting…' : 'Delete this scorecard'}
+              </button>
+            </>
           )}
         </div>
       </div>
