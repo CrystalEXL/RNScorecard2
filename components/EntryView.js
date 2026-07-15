@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
-  METRICS, SCORE_OPTIONS, MONTH_NAMES, SCORE_KEY_COLS, SCORE_KEY,
+  METRICS, SCORE_OPTIONS, MONTH_NAMES, SCORE_KEY_COLS, SCORE_KEY, PRODUCTIVITY_SCALE,
   computeTotal, fmt, badge, entryId,
 } from '@/lib/scoring';
 import { saveEntry, deleteEntry } from '@/lib/data';
@@ -172,6 +172,48 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
                     ))}
                   </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {showKey && (
+        <div style={{ background: '#fff', border: '1px solid #E7E2D8', borderRadius: '14px', overflow: 'hidden', marginBottom: '22px' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #EBE6DB' }}>
+            <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '15px' }}>Productivity Scale</div>
+            <div style={{ fontSize: '12.5px', color: '#98a09d', marginTop: '3px' }}>Detailed breakdown behind each Productivity score.</div>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '820px' }}>
+              <thead>
+                <tr style={{ background: '#FAF8F2', borderBottom: '1px solid #EBE6DB', color: '#7b847f', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                  <th style={{ padding: '11px 12px', textAlign: 'center' }}>Rating</th>
+                  <th style={{ padding: '11px 16px', textAlign: 'left' }}>Label</th>
+                  <th style={{ padding: '11px 12px', textAlign: 'left' }}>Completed Calls/Day</th>
+                  <th style={{ padding: '11px 12px', textAlign: 'left' }}>Call Attempts/Day</th>
+                  <th style={{ padding: '11px 12px', textAlign: 'left' }}>Monthly Completed Contacts</th>
+                  <th style={{ padding: '11px 12px', textAlign: 'left' }}>Cadence Compliance</th>
+                  <th style={{ padding: '11px 16px', textAlign: 'left' }}>Documentation</th>
+                </tr>
+              </thead>
+              <tbody>
+                {PRODUCTIVITY_SCALE.map((row) => {
+                  const b = badge(Number(row.rating));
+                  return (
+                    <tr key={row.rating} style={{ borderBottom: '1px solid #F2EEE4' }}>
+                      <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                        <span style={{ display: 'inline-block', minWidth: '38px', padding: '3px 8px', borderRadius: '7px', background: b.bg, color: b.fg, fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '12.5px' }}>{row.rating}</span>
+                      </td>
+                      <td style={{ padding: '10px 16px', fontWeight: 600, color: '#1B2A2C' }}>{row.label}</td>
+                      <td style={{ padding: '10px 12px', color: '#4b5654' }}>{row.calls}</td>
+                      <td style={{ padding: '10px 12px', color: '#4b5654' }}>{row.attempts}</td>
+                      <td style={{ padding: '10px 12px', color: '#4b5654' }}>{row.contacts}</td>
+                      <td style={{ padding: '10px 12px', color: '#4b5654' }}>{row.cadence}</td>
+                      <td style={{ padding: '10px 16px', color: '#4b5654' }}>{row.documentation}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
