@@ -13,19 +13,16 @@ service cloud.firestore {
     }
 
     match /nurses/{nurseId} {
-      // Any signed-in manager can see the shared roster (single shared portal),
-      // but only the owning manager (or an admin) can create/edit/deactivate.
+      // Single shared portal: any signed-in manager (or the coordinator/admin
+      // building out the roster) can see, add, reassign, or deactivate any
+      // nurse — not just ones "owned" by their own account. managerId may
+      // also be left blank until a manager is assigned.
       allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.managerId == request.auth.uid;
-      allow update, delete: if signedIn() &&
-        (resource.data.managerId == request.auth.uid || isAdmin());
+      allow create, update, delete: if signedIn();
 
       match /entries/{entryId} {
         allow read: if signedIn();
-        allow write: if signedIn() && (
-          get(/databases/$(database)/documents/nurses/$(nurseId)).data.managerId == request.auth.uid ||
-          isAdmin()
-        );
+        allow write: if signedIn();
       }
     }
 

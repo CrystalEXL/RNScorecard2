@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import {
   fmt, pillStyle, initials, avatarColors, annualAvg, latestMonth, quarterAvg, isBonusEligible,
 } from '@/lib/scoring';
-import { addNurse, deactivateNurse } from '@/lib/data';
+import { addNurse, deactivateNurse, updateNurseManager } from '@/lib/data';
 
 const inputBase = {
   width: '100%',
@@ -22,7 +22,7 @@ export default function RosterView({
 }) {
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
-  const [newManagerId, setNewManagerId] = useState(managerFilterId !== 'all' ? managerFilterId : (currentManagerId || (managers[0] && managers[0].id) || ''));
+  const [newManagerId, setNewManagerId] = useState(managerFilterId !== 'all' ? managerFilterId : '');
   const [addError, setAddError] = useState('');
 
   const filtered = useMemo(() => {
@@ -61,9 +61,8 @@ export default function RosterView({
 
   const onAddNurse = async () => {
     if (!newName.trim()) { setAddError('Enter a nurse name.'); return; }
-    if (!newManagerId) { setAddError('Choose a manager.'); return; }
     try {
-      await addNurse({ name: newName.trim(), managerId: newManagerId });
+      await addNurse({ name: newName.trim(), managerId: newManagerId || '' });
       setShowAdd(false);
       setNewName('');
       setAddError('');
@@ -77,6 +76,11 @@ export default function RosterView({
     if (window.confirm(`Remove ${n.name} from the roster? Their scores are kept but hidden.`)) {
       await deactivateNurse(n.id);
     }
+  };
+
+  const onChangeManager = async (nurseId, managerId, e) => {
+    e.stopPropagation();
+    await updateNurseManager(nurseId, managerId);
   };
 
   return (
@@ -141,6 +145,7 @@ export default function RosterView({
             <div style={{ minWidth: '180px' }}>
               <label style={fieldLabel}>Manager</label>
               <select value={newManagerId} onChange={(e) => { setNewManagerId(e.target.value); setAddError(''); }} style={{ ...inputBase, padding: '12px 13px', cursor: 'pointer' }}>
+                <option value="">— No manager assigned —</option>
                 {managers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
             </div>
@@ -150,7 +155,7 @@ export default function RosterView({
           {addError && <div style={{ color: '#A3331F', fontSize: '13px', fontWeight: 600, marginTop: '10px' }}>{addError}</div>}
           {managers.length === 0 && (
             <div style={{ color: '#8A5A12', fontSize: '12.5px', marginTop: '10px' }}>
-              No managers found yet — sign in with each manager's account once to register them, or add nurses under your own name.
+              No managers registered yet — you can still add nurses with no manager assigned, and assign one later once a manager has signed in.
             </div>
           )}
         </div>
@@ -184,7 +189,16 @@ export default function RosterView({
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: '13px 12px', color: '#4b5654' }}>{r.manager}</td>
+                    <td style={{ padding: '13px 12px' }} onClick={(e) => e.stopPropagation()}>
+                      <select
+                        value={n?.managerId || ''}
+                        onChange={(e) => onChangeManager(r.id, e.target.value, e)}
+                        style={{ padding: '7px 9px', border: '1.5px solid #ded7c8', borderRadius: '8px', background: '#fff', fontSize: '13px', color: '#4b5654', outline: 'none', cursor: 'pointer', maxWidth: '160px' }}
+                      >
+                        <option value="">— None —</option>
+                        {managers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                      </select>
+                    </td>
                     <td style={{ padding: '13px 12px', textAlign: 'center' }}><span style={r.latestStyle}>{r.latest}</span></td>
                     <td style={{ padding: '13px 12px', textAlign: 'center' }}><span style={r.ytdStyle}>{r.ytd}</span></td>
                     <td style={{ padding: '13px 12px', textAlign: 'center', fontFamily: "'Space Grotesk'", fontWeight: 500, color: '#4b5654' }}>{r.bonusQ}</td>
