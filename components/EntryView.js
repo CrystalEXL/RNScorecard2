@@ -23,10 +23,10 @@ function blankScores() {
   return s;
 }
 
-export default function EntryView({ nurses, entriesByNurse, year, uid, initialNurseId }) {
+export default function EntryView({ nurses, entriesByNurse, year, uid, initialNurseId, initialMonth }) {
   const [showKey, setShowKey] = useState(false);
   const [nurseId, setNurseId] = useState(initialNurseId || (nurses[0] && nurses[0].id) || '');
-  const [month, setMonth] = useState(() => String(new Date().getMonth() + 1));
+  const [month, setMonth] = useState(() => (initialMonth != null ? String(initialMonth) : String(new Date().getMonth() + 1)));
   const [scores, setScores] = useState(blankScores());
   const [existed, setExisted] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
@@ -36,6 +36,10 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
   useEffect(() => {
     if (initialNurseId) setNurseId(initialNurseId);
   }, [initialNurseId]);
+
+  useEffect(() => {
+    if (initialMonth != null) setMonth(String(initialMonth));
+  }, [initialMonth]);
 
   useEffect(() => {
     const entries = entriesByNurse[nurseId] || {};

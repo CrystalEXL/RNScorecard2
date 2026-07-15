@@ -5,7 +5,7 @@ import {
   quarterAvg, annualAvg, latestMonth, isBonusEligible, computeTotal, entryId,
 } from '@/lib/scoring';
 
-export default function NurseDashboardView({ nurse, nurses, entries, year, managerName, onBack, onSwitchNurse }) {
+export default function NurseDashboardView({ nurse, nurses, entries, year, managerName, onBack, onSwitchNurse, onEditMonth }) {
   const [avaBg, avaFg] = avatarColors(nurse.id);
 
   const monthRows = MONTH_NAMES.map((nm, i) => {
@@ -17,11 +17,13 @@ export default function NurseDashboardView({ nurse, nurses, entries, year, manag
       color: rec ? (rec.scores[m.key] === 'NA' ? '#98a09d' : colorFor(Number(rec.scores[m.key]))) : '#c4c8c2',
     }));
     return {
+      mo,
       label: nm.slice(0, 3),
       cells,
       total: fmt(total),
       totalStyle: pillStyle(total),
       rowStyle: rec ? {} : { opacity: 0.5 },
+      hasData: !!rec,
     };
   });
 
@@ -96,7 +98,10 @@ export default function NurseDashboardView({ nurse, nurses, entries, year, manag
       </div>
 
       <div style={{ background: '#fff', border: '1px solid #E7E2D8', borderRadius: '14px', overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid #EBE6DB', fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '15px' }}>Monthly Breakdown · {year}</div>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #EBE6DB', fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '15px' }}>
+          Monthly Breakdown · {year}
+          <span style={{ fontWeight: 500, color: '#98a09d', fontSize: '12.5px', marginLeft: '10px' }}>Click a month to edit or add its scores</span>
+        </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13.5px', minWidth: '760px' }}>
             <thead>
@@ -113,7 +118,12 @@ export default function NurseDashboardView({ nurse, nurses, entries, year, manag
             </thead>
             <tbody>
               {monthRows.map((row) => (
-                <tr key={row.label} style={{ borderBottom: '1px solid #F2EEE4', ...row.rowStyle }}>
+                <tr
+                  key={row.label}
+                  onClick={() => onEditMonth(nurse.id, row.mo)}
+                  title={row.hasData ? 'Edit this month’s scores' : 'Add scores for this month'}
+                  style={{ borderBottom: '1px solid #F2EEE4', cursor: 'pointer', ...row.rowStyle }}
+                >
                   <td style={{ padding: '11px 20px', fontWeight: 600, color: '#4b5654' }}>{row.label}</td>
                   {row.cells.map((cell, i) => (
                     <td key={i} style={{ padding: '11px 8px', textAlign: 'center', fontFamily: "'Space Grotesk'", color: cell.color }}>{cell.txt}</td>

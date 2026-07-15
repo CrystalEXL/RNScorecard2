@@ -52,6 +52,7 @@ function App({ uid }) {
   const [search, setSearch] = useState('');
   const [selectedNurseId, setSelectedNurseId] = useState(null);
   const [bonusQuarter, setBonusQuarter] = useState('2');
+  const [entryMonth, setEntryMonth] = useState(null);
 
   const managerName = (id) => managers.find((m) => m.id === id)?.name || '—';
   const scopeLabel = managerId === 'all' ? 'All managers' : managerName(managerId);
@@ -63,11 +64,17 @@ function App({ uid }) {
   const openNurse = (id) => { setSelectedNurseId(id); setView('nurse'); };
   const selectedNurse = nurses.find((n) => n.id === selectedNurseId);
 
+  // Plain entry point: no specific month pre-selected (defaults to current month).
+  const goEntry = () => { setEntryMonth(null); setView('entry'); };
+  // From a nurse's monthly breakdown: jump straight to that nurse+month, pre-filled.
+  const editMonth = (nurseId, mo) => { setSelectedNurseId(nurseId); setEntryMonth(mo); setView('entry'); };
+  const onNavigate = (v) => { if (v === 'entry') goEntry(); else setView(v); };
+
   if (!nursesLoaded) return <FullScreenMessage text="Loading roster…" />;
 
   return (
     <div>
-      <Header managers={managers} managerId={managerId} onManagerChange={setManagerId} view={view} onNavigate={setView} year={year} onYearChange={setYear} />
+      <Header managers={managers} managerId={managerId} onManagerChange={setManagerId} view={view} onNavigate={onNavigate} year={year} onYearChange={setYear} />
       <main style={{ maxWidth: '1220px', margin: '0 auto', padding: '30px 28px 70px' }}>
         {(nursesError || entriesError) && (
           <div style={{ background: '#F6E0DA', color: '#A3331F', border: '1px solid #e0b3a6', borderRadius: '10px', padding: '12px 16px', fontSize: '13.5px', fontWeight: 600, marginBottom: '20px' }}>
@@ -85,7 +92,7 @@ function App({ uid }) {
             search={search}
             onSearchChange={setSearch}
             onOpenNurse={openNurse}
-            onGoEntry={() => setView('entry')}
+            onGoEntry={goEntry}
             currentManagerId={uid}
             managerFilterId={managerId}
           />
@@ -98,6 +105,7 @@ function App({ uid }) {
             year={year}
             uid={uid}
             initialNurseId={selectedNurseId}
+            initialMonth={entryMonth}
           />
         )}
 
@@ -110,6 +118,7 @@ function App({ uid }) {
             managerName={managerName}
             onBack={() => setView('roster')}
             onSwitchNurse={(id) => setSelectedNurseId(id)}
+            onEditMonth={editMonth}
           />
         )}
         {view === 'nurse' && !selectedNurse && (
