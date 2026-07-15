@@ -27,7 +27,9 @@ export default function RosterView({
 
   const filtered = useMemo(() => {
     const s = (search || '').toLowerCase();
-    return nurses.filter((n) => !s || n.name.toLowerCase().includes(s));
+    return nurses
+      .filter((n) => !s || n.name.toLowerCase().includes(s))
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   }, [nurses, search]);
 
   const rows = useMemo(() => {
