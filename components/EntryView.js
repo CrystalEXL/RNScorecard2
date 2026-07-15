@@ -26,7 +26,7 @@ function blankScores() {
 export default function EntryView({ nurses, entriesByNurse, year, uid, initialNurseId }) {
   const [showKey, setShowKey] = useState(false);
   const [nurseId, setNurseId] = useState(initialNurseId || (nurses[0] && nurses[0].id) || '');
-  const [month, setMonth] = useState('6');
+  const [month, setMonth] = useState(() => String(new Date().getMonth() + 1));
   const [scores, setScores] = useState(blankScores());
   const [existed, setExisted] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
