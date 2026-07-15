@@ -37,7 +37,7 @@ export default function Header({ managers, managerId, onManagerChange, view, onN
             </div>
             <div>
               <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '15px', letterSpacing: '-.01em', lineHeight: 1 }}>
-                Scorecard
+                Case Manager Scorecard
               </div>
               <div style={{ fontSize: '11px', color: '#9fb2b0', marginTop: '3px' }}>RN Performance · FY{year}</div>
             </div>

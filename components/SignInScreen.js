@@ -94,7 +94,7 @@ export default function SignInScreen() {
             RN
           </div>
           <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '16px', letterSpacing: '-.01em' }}>
-            Scorecard
+            Case Manager Scorecard
           </div>
         </div>
 
