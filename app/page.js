@@ -78,7 +78,8 @@ function App({ uid }) {
       <main style={{ maxWidth: '1220px', margin: '0 auto', padding: '30px 28px 70px' }}>
         {(nursesError || entriesError) && (
           <div style={{ background: '#F6E0DA', color: '#A3331F', border: '1px solid #e0b3a6', borderRadius: '10px', padding: '12px 16px', fontSize: '13.5px', fontWeight: 600, marginBottom: '20px' }}>
-            {nursesError || entriesError}
+            {nursesError && <div>Nurses: {nursesError}</div>}
+            {entriesError && <div>Scores: {entriesError}</div>}
           </div>
         )}
         {view === 'roster' && (
