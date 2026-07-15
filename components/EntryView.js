@@ -123,8 +123,116 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
     cells: SCORE_KEY_COLS.map((c) => ({ v: (SCORE_KEY[m.key] && SCORE_KEY[m.key][c]) || '—' })),
   }));
 
+  const scoringKeyPanels = (
+    <>
+      <div style={{ background: '#fff', border: '1px solid #E7E2D8', borderRadius: '14px', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #EBE6DB' }}>
+          <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '15px' }}>Scoring Key</div>
+          <div style={{ fontSize: '12.5px', color: '#98a09d', marginTop: '3px' }}>Raw performance thresholds that map to each score. Blank / TBD cells are not yet defined.</div>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
+            <thead>
+              <tr style={{ background: '#FAF8F2', borderBottom: '1px solid #EBE6DB' }}>
+                <th style={{ textAlign: 'left', padding: '11px 16px', fontSize: '11px', fontWeight: 600, color: '#7b847f', textTransform: 'uppercase', letterSpacing: '.05em' }}>Metric</th>
+                {scoreKeyCols.map((c) => (
+                  <th key={c.label} style={{ padding: '8px 5px', textAlign: 'center' }}>
+                    <span style={{ display: 'inline-block', minWidth: '34px', padding: '3px 6px', borderRadius: '7px', background: c.bg, color: c.fg, fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '12px' }}>{c.label}</span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {scoreKeyRows.map((row) => (
+                <tr key={row.label} style={{ borderBottom: '1px solid #F2EEE4' }}>
+                  <td style={{ padding: '10px 16px' }}>
+                    <span style={{ fontWeight: 600, color: '#1B2A2C' }}>{row.label}</span>{' '}
+                    <span style={{ color: '#b3b8b2', fontSize: '12px' }}>{row.weight}</span>
+                  </td>
+                  {row.cells.map((cell, i) => (
+                    <td key={i} style={{ padding: '10px 5px', textAlign: 'center', fontFamily: "'Space Grotesk'", color: '#4b5654' }}>{cell.v}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style={{ background: '#fff', border: '1px solid #E7E2D8', borderRadius: '14px', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #EBE6DB' }}>
+          <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '15px' }}>Productivity Scale</div>
+          <div style={{ fontSize: '12.5px', color: '#98a09d', marginTop: '3px' }}>Detailed breakdown behind each Productivity score.</div>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '700px' }}>
+            <thead>
+              <tr style={{ background: '#FAF8F2', borderBottom: '1px solid #EBE6DB', color: '#7b847f', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                <th style={{ padding: '10px 10px', textAlign: 'center' }}>Rating</th>
+                <th style={{ padding: '10px 14px', textAlign: 'left' }}>Label</th>
+                <th style={{ padding: '10px 10px', textAlign: 'left' }}>Calls/Day</th>
+                <th style={{ padding: '10px 10px', textAlign: 'left' }}>Attempts/Day</th>
+                <th style={{ padding: '10px 10px', textAlign: 'left' }}>Monthly Contacts</th>
+                <th style={{ padding: '10px 10px', textAlign: 'left' }}>Cadence Compliance</th>
+                <th style={{ padding: '10px 14px', textAlign: 'left' }}>Documentation</th>
+              </tr>
+            </thead>
+            <tbody>
+              {PRODUCTIVITY_SCALE.map((row) => {
+                const b = badge(Number(row.rating));
+                return (
+                  <tr key={row.rating} style={{ borderBottom: '1px solid #F2EEE4' }}>
+                    <td style={{ padding: '9px 10px', textAlign: 'center' }}>
+                      <span style={{ display: 'inline-block', minWidth: '34px', padding: '3px 6px', borderRadius: '7px', background: b.bg, color: b.fg, fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '12px' }}>{row.rating}</span>
+                    </td>
+                    <td style={{ padding: '9px 14px', fontWeight: 600, color: '#1B2A2C' }}>{row.label}</td>
+                    <td style={{ padding: '9px 10px', color: '#4b5654' }}>{row.calls}</td>
+                    <td style={{ padding: '9px 10px', color: '#4b5654' }}>{row.attempts}</td>
+                    <td style={{ padding: '9px 10px', color: '#4b5654' }}>{row.contacts}</td>
+                    <td style={{ padding: '9px 10px', color: '#4b5654' }}>{row.cadence}</td>
+                    <td style={{ padding: '9px 14px', color: '#4b5654' }}>{row.documentation}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  );
+
+  const summaryCard = (
+    <div style={{ background: '#233B3C', color: '#F4F1EA', borderRadius: '14px', padding: '26px' }}>
+      <div style={{ fontSize: '12px', fontWeight: 600, color: '#9fb2b0', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '6px' }}>Weighted Monthly Total</div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+        <div style={{ fontFamily: "'Space Grotesk'", fontSize: '54px', fontWeight: 600, lineHeight: 1, color: liveColor }}>{fmt(liveTotal)}</div>
+        <div style={{ fontSize: '16px', color: '#9fb2b0' }}>/ 5.0</div>
+      </div>
+      <div style={liveBadgeStyle}>{liveBadgeLabel}</div>
+      <div style={{ marginTop: '20px', paddingTop: '18px', borderTop: '1px solid #3a5556' }}>
+        <div style={{ fontSize: '12.5px', color: '#9fb2b0', lineHeight: 1.6 }}>
+          Nurses averaging <b style={{ color: '#F4F1EA' }}>3.5 or higher</b> across a quarter earn the quarterly bonus.
+        </div>
+      </div>
+      {existed && (
+        <>
+          <div style={{ marginTop: '16px', fontSize: '12px', color: '#e0b96b', background: '#3a4f45', padding: '9px 12px', borderRadius: '8px' }}>
+            Editing an existing entry for this month.
+          </div>
+          <button
+            onClick={onDelete}
+            disabled={deleting}
+            style={{ marginTop: '10px', width: '100%', background: 'transparent', color: '#E39A8C', border: '1.5px solid #5a3d38', borderRadius: '8px', padding: '10px 12px', fontSize: '12.5px', fontWeight: 600, cursor: deleting ? 'default' : 'pointer', opacity: deleting ? 0.7 : 1 }}
+          >
+            {deleting ? 'Deleting…' : 'Delete this scorecard'}
+          </button>
+        </>
+      )}
+    </div>
+  );
+
   return (
-    <div style={{ maxWidth: '940px' }}>
+    <div style={{ maxWidth: showKey ? '1180px' : '940px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '4px' }}>
         <h2 style={{ fontFamily: "'Space Grotesk'", fontSize: '26px', fontWeight: 600, margin: 0, letterSpacing: '-.02em' }}>Enter Monthly Scores</h2>
         <button
@@ -135,171 +243,82 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
             <circle cx="12" cy="12" r="10"></circle>
             <path d="M12 16v-4M12 8h.01"></path>
           </svg>
-          Scoring Key
+          {showKey ? 'Hide Scoring Key' : 'Scoring Key'}
         </button>
       </div>
       <p style={{ margin: '6px 0 20px', color: '#6b7674', fontSize: '14px' }}>
         Score each metric 1–5 (or NA). The monthly total is the weighted average, calculated automatically.
+        {showKey && ' The scoring key is open on the left for reference.'}
       </p>
 
-      {showKey && (
-        <div style={{ background: '#fff', border: '1px solid #E7E2D8', borderRadius: '14px', overflow: 'hidden', marginBottom: '22px' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid #EBE6DB' }}>
-            <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '15px' }}>Scoring Key</div>
-            <div style={{ fontSize: '12.5px', color: '#98a09d', marginTop: '3px' }}>Raw performance thresholds that map to each score. Blank / TBD cells are not yet defined.</div>
+      <div style={{ display: 'grid', gridTemplateColumns: showKey ? '1fr 1fr' : '1.4fr 1fr', gap: '24px', alignItems: 'start' }}>
+        {showKey && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '20px', maxHeight: 'calc(100vh - 40px)', overflowY: 'auto' }}>
+            {scoringKeyPanels}
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '680px' }}>
-              <thead>
-                <tr style={{ background: '#FAF8F2', borderBottom: '1px solid #EBE6DB' }}>
-                  <th style={{ textAlign: 'left', padding: '11px 20px', fontSize: '11px', fontWeight: 600, color: '#7b847f', textTransform: 'uppercase', letterSpacing: '.05em' }}>Metric</th>
-                  {scoreKeyCols.map((c) => (
-                    <th key={c.label} style={{ padding: '8px 6px', textAlign: 'center' }}>
-                      <span style={{ display: 'inline-block', minWidth: '38px', padding: '3px 8px', borderRadius: '7px', background: c.bg, color: c.fg, fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '12.5px' }}>{c.label}</span>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {scoreKeyRows.map((row) => (
-                  <tr key={row.label} style={{ borderBottom: '1px solid #F2EEE4' }}>
-                    <td style={{ padding: '11px 20px' }}>
-                      <span style={{ fontWeight: 600, color: '#1B2A2C' }}>{row.label}</span>{' '}
-                      <span style={{ color: '#b3b8b2', fontSize: '12px' }}>{row.weight}</span>
-                    </td>
-                    {row.cells.map((cell, i) => (
-                      <td key={i} style={{ padding: '11px 6px', textAlign: 'center', fontFamily: "'Space Grotesk'", color: '#4b5654' }}>{cell.v}</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+        )}
 
-      {showKey && (
-        <div style={{ background: '#fff', border: '1px solid #E7E2D8', borderRadius: '14px', overflow: 'hidden', marginBottom: '22px' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid #EBE6DB' }}>
-            <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '15px' }}>Productivity Scale</div>
-            <div style={{ fontSize: '12.5px', color: '#98a09d', marginTop: '3px' }}>Detailed breakdown behind each Productivity score.</div>
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '820px' }}>
-              <thead>
-                <tr style={{ background: '#FAF8F2', borderBottom: '1px solid #EBE6DB', color: '#7b847f', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-                  <th style={{ padding: '11px 12px', textAlign: 'center' }}>Rating</th>
-                  <th style={{ padding: '11px 16px', textAlign: 'left' }}>Label</th>
-                  <th style={{ padding: '11px 12px', textAlign: 'left' }}>Completed Calls/Day</th>
-                  <th style={{ padding: '11px 12px', textAlign: 'left' }}>Call Attempts/Day</th>
-                  <th style={{ padding: '11px 12px', textAlign: 'left' }}>Monthly Completed Contacts</th>
-                  <th style={{ padding: '11px 12px', textAlign: 'left' }}>Cadence Compliance</th>
-                  <th style={{ padding: '11px 16px', textAlign: 'left' }}>Documentation</th>
-                </tr>
-              </thead>
-              <tbody>
-                {PRODUCTIVITY_SCALE.map((row) => {
-                  const b = badge(Number(row.rating));
-                  return (
-                    <tr key={row.rating} style={{ borderBottom: '1px solid #F2EEE4' }}>
-                      <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                        <span style={{ display: 'inline-block', minWidth: '38px', padding: '3px 8px', borderRadius: '7px', background: b.bg, color: b.fg, fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '12.5px' }}>{row.rating}</span>
-                      </td>
-                      <td style={{ padding: '10px 16px', fontWeight: 600, color: '#1B2A2C' }}>{row.label}</td>
-                      <td style={{ padding: '10px 12px', color: '#4b5654' }}>{row.calls}</td>
-                      <td style={{ padding: '10px 12px', color: '#4b5654' }}>{row.attempts}</td>
-                      <td style={{ padding: '10px 12px', color: '#4b5654' }}>{row.contacts}</td>
-                      <td style={{ padding: '10px 12px', color: '#4b5654' }}>{row.cadence}</td>
-                      <td style={{ padding: '10px 16px', color: '#4b5654' }}>{row.documentation}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '24px', alignItems: 'start' }}>
-        <div style={{ background: '#fff', border: '1px solid #E7E2D8', borderRadius: '14px', padding: '26px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '22px' }}>
-            <div>
-              <label style={fieldLabel}>Nurse</label>
-              <select value={nurseId} onChange={(e) => setNurseId(e.target.value)} style={selectBase}>
-                {nurses.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={fieldLabel}>Month · {year}</label>
-              <select value={month} onChange={(e) => setMonth(e.target.value)} style={selectBase}>
-                {MONTH_NAMES.map((nm, i) => <option key={i} value={String(i + 1)}>{nm}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {METRICS.map((m) => (
-              <div key={m.key} style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: '14px', color: '#1B2A2C' }}>{m.label}</div>
-                  <div style={{ fontSize: '12px', color: '#98a09d' }}>Weight {m.weight}%</div>
-                </div>
-                <select
-                  value={scores[m.key] || ''}
-                  onChange={(e) => { setScores((s) => ({ ...s, [m.key]: e.target.value })); setSavedMsg(''); setErrMsg(''); }}
-                  style={{ width: '110px', padding: '11px 12px', border: '1.5px solid #ded7c8', borderRadius: '10px', background: '#fff', fontSize: '15px', fontFamily: "'Space Grotesk'", fontWeight: 500, outline: 'none', cursor: 'pointer', textAlign: 'center' }}
-                >
-                  <option value="">—</option>
-                  {SCORE_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+        <div>
+          <div style={{ background: '#fff', border: '1px solid #E7E2D8', borderRadius: '14px', padding: '26px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '22px' }}>
+              <div>
+                <label style={fieldLabel}>Nurse</label>
+                <select value={nurseId} onChange={(e) => setNurseId(e.target.value)} style={selectBase}>
+                  {nurses.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
                 </select>
               </div>
-            ))}
-          </div>
+              <div>
+                <label style={fieldLabel}>Month · {year}</label>
+                <select value={month} onChange={(e) => setMonth(e.target.value)} style={selectBase}>
+                  {MONTH_NAMES.map((nm, i) => <option key={i} value={String(i + 1)}>{nm}</option>)}
+                </select>
+              </div>
+            </div>
 
-          <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-            <button onClick={onSave} disabled={saving} style={{ background: '#0E5B57', color: '#fff', border: 'none', borderRadius: '10px', padding: '13px 24px', fontSize: '14px', fontWeight: 600, cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.7 : 1 }}>
-              {saving ? 'Saving…' : 'Save Scorecard'}
-            </button>
-            <button onClick={onClear} style={{ background: 'transparent', color: '#6b7674', border: '1.5px solid #ded7c8', borderRadius: '10px', padding: '13px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
-              Clear
-            </button>
-            {savedMsg && (
-              <span style={{ color: '#0F6B3E', fontSize: '13.5px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
-                {savedMsg}
-              </span>
-            )}
-            {errMsg && <span style={{ color: '#A3331F', fontSize: '13.5px', fontWeight: 600 }}>{errMsg}</span>}
-          </div>
-        </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {METRICS.map((m) => (
+                <div key={m.key} style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: '14px', color: '#1B2A2C' }}>{m.label}</div>
+                    <div style={{ fontSize: '12px', color: '#98a09d' }}>Weight {m.weight}%</div>
+                  </div>
+                  <select
+                    value={scores[m.key] || ''}
+                    onChange={(e) => { setScores((s) => ({ ...s, [m.key]: e.target.value })); setSavedMsg(''); setErrMsg(''); }}
+                    style={{ width: '110px', padding: '11px 12px', border: '1.5px solid #ded7c8', borderRadius: '10px', background: '#fff', fontSize: '15px', fontFamily: "'Space Grotesk'", fontWeight: 500, outline: 'none', cursor: 'pointer', textAlign: 'center' }}
+                  >
+                    <option value="">—</option>
+                    {SCORE_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+              ))}
+            </div>
 
-        <div style={{ background: '#233B3C', color: '#F4F1EA', borderRadius: '14px', padding: '26px', position: 'sticky', top: '20px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#9fb2b0', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '6px' }}>Weighted Monthly Total</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-            <div style={{ fontFamily: "'Space Grotesk'", fontSize: '54px', fontWeight: 600, lineHeight: 1, color: liveColor }}>{fmt(liveTotal)}</div>
-            <div style={{ fontSize: '16px', color: '#9fb2b0' }}>/ 5.0</div>
-          </div>
-          <div style={liveBadgeStyle}>{liveBadgeLabel}</div>
-          <div style={{ marginTop: '20px', paddingTop: '18px', borderTop: '1px solid #3a5556' }}>
-            <div style={{ fontSize: '12.5px', color: '#9fb2b0', lineHeight: 1.6 }}>
-              Nurses averaging <b style={{ color: '#F4F1EA' }}>3.5 or higher</b> across a quarter earn the quarterly bonus.
+            <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+              <button onClick={onSave} disabled={saving} style={{ background: '#0E5B57', color: '#fff', border: 'none', borderRadius: '10px', padding: '13px 24px', fontSize: '14px', fontWeight: 600, cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+                {saving ? 'Saving…' : 'Save Scorecard'}
+              </button>
+              <button onClick={onClear} style={{ background: 'transparent', color: '#6b7674', border: '1.5px solid #ded7c8', borderRadius: '10px', padding: '13px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
+                Clear
+              </button>
+              {savedMsg && (
+                <span style={{ color: '#0F6B3E', fontSize: '13.5px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                  {savedMsg}
+                </span>
+              )}
+              {errMsg && <span style={{ color: '#A3331F', fontSize: '13.5px', fontWeight: 600 }}>{errMsg}</span>}
             </div>
           </div>
-          {existed && (
-            <>
-              <div style={{ marginTop: '16px', fontSize: '12px', color: '#e0b96b', background: '#3a4f45', padding: '9px 12px', borderRadius: '8px' }}>
-                Editing an existing entry for this month.
-              </div>
-              <button
-                onClick={onDelete}
-                disabled={deleting}
-                style={{ marginTop: '10px', width: '100%', background: 'transparent', color: '#E39A8C', border: '1.5px solid #5a3d38', borderRadius: '8px', padding: '10px 12px', fontSize: '12.5px', fontWeight: 600, cursor: deleting ? 'default' : 'pointer', opacity: deleting ? 0.7 : 1 }}
-              >
-                {deleting ? 'Deleting…' : 'Delete this scorecard'}
-              </button>
-            </>
-          )}
+
+          {showKey && <div style={{ marginTop: '20px' }}>{summaryCard}</div>}
         </div>
+
+        {!showKey && (
+          <div style={{ position: 'sticky', top: '20px' }}>
+            {summaryCard}
+          </div>
+        )}
       </div>
     </div>
   );
