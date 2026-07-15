@@ -1,8 +1,18 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Scorecard',
+  title: 'Case Manager Scorecard',
   description: 'RN Performance Scorecard Portal',
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
+  },
 };
 
 export default function RootLayout({ children }) {
