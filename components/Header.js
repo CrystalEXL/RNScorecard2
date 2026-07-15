@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { signOutUser } from '@/lib/useAuth';
-import { YEAR } from '@/lib/scoring';
+import { YEARS } from '@/lib/scoring';
 import ChangePasswordModal from './ChangePasswordModal';
 
 function tabStyle(active) {
@@ -24,7 +24,7 @@ const btnOutline = {
   borderRadius: '9px', padding: '8px 13px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
 };
 
-export default function Header({ managers, managerId, onManagerChange, view, onNavigate }) {
+export default function Header({ managers, managerId, onManagerChange, view, onNavigate, year, onYearChange }) {
   const [showPwModal, setShowPwModal] = useState(false);
 
   return (
@@ -39,10 +39,22 @@ export default function Header({ managers, managerId, onManagerChange, view, onN
               <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '15px', letterSpacing: '-.01em', lineHeight: 1 }}>
                 Scorecard
               </div>
-              <div style={{ fontSize: '11px', color: '#9fb2b0', marginTop: '3px' }}>RN Performance · FY{YEAR}</div>
+              <div style={{ fontSize: '11px', color: '#9fb2b0', marginTop: '3px' }}>RN Performance · FY{year}</div>
             </div>
           </div>
           <div style={{ flex: 1 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+            <span style={{ color: '#9fb2b0' }}>Year</span>
+            <select
+              value={year}
+              onChange={(e) => onYearChange(Number(e.target.value))}
+              style={{ background: '#2f4b4c', color: '#F4F1EA', border: '1px solid #3d5a5b', borderRadius: '9px', padding: '8px 12px', fontSize: '13px', fontWeight: 500, outline: 'none', cursor: 'pointer' }}
+            >
+              {YEARS.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
             <span style={{ color: '#9fb2b0' }}>Manager</span>
             <select

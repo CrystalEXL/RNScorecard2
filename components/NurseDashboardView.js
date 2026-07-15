@@ -1,16 +1,16 @@
 'use client';
 
 import {
-  METRICS, MONTH_NAMES, YEAR, fmt, rawFmt, colorFor, pillStyle, initials, avatarColors,
-  quarterAvg, annualAvg, latestMonth, isBonusEligible, computeTotal,
+  METRICS, MONTH_NAMES, fmt, rawFmt, colorFor, pillStyle, initials, avatarColors,
+  quarterAvg, annualAvg, latestMonth, isBonusEligible, computeTotal, entryId,
 } from '@/lib/scoring';
 
-export default function NurseDashboardView({ nurse, nurses, entries, managerName, onBack, onSwitchNurse }) {
+export default function NurseDashboardView({ nurse, nurses, entries, year, managerName, onBack, onSwitchNurse }) {
   const [avaBg, avaFg] = avatarColors(nurse.id);
 
   const monthRows = MONTH_NAMES.map((nm, i) => {
     const mo = i + 1;
-    const rec = entries[YEAR + '-' + String(mo).padStart(2, '0')];
+    const rec = entries[entryId(year, mo)];
     const total = rec ? (rec.total != null ? rec.total : computeTotal(rec.scores)) : null;
     const cells = METRICS.map((m) => ({
       txt: rec ? rawFmt(rec.scores[m.key]) : '—',
@@ -26,7 +26,7 @@ export default function NurseDashboardView({ nurse, nurses, entries, managerName
   });
 
   const quarters = [1, 2, 3, 4].map((qi) => {
-    const qa = quarterAvg(entries, qi);
+    const qa = quarterAvg(entries, year, qi);
     const elig = isBonusEligible(qa.avg);
     const has = qa.count > 0;
     return {
@@ -52,11 +52,11 @@ export default function NurseDashboardView({ nurse, nurses, entries, managerName
 
   let bonusCount = 0, qtrCount = 0;
   for (let qi = 1; qi <= 4; qi++) {
-    const qa = quarterAvg(entries, qi);
+    const qa = quarterAvg(entries, year, qi);
     if (qa.count > 0) { qtrCount++; if (isBonusEligible(qa.avg)) bonusCount++; }
   }
-  const lm = latestMonth(entries);
-  const ann = annualAvg(entries);
+  const lm = latestMonth(entries, year);
+  const ann = annualAvg(entries, year);
 
   return (
     <div>
@@ -96,7 +96,7 @@ export default function NurseDashboardView({ nurse, nurses, entries, managerName
       </div>
 
       <div style={{ background: '#fff', border: '1px solid #E7E2D8', borderRadius: '14px', overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid #EBE6DB', fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '15px' }}>Monthly Breakdown · {YEAR}</div>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #EBE6DB', fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '15px' }}>Monthly Breakdown · {year}</div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13.5px', minWidth: '760px' }}>
             <thead>

@@ -17,7 +17,7 @@ const inputBase = {
 };
 
 export default function RosterView({
-  nurses, managers, entriesByNurse, managerName, scopeLabel,
+  nurses, managers, entriesByNurse, year, managerName, scopeLabel,
   search, onSearchChange, onOpenNurse, onGoEntry, currentManagerId, managerFilterId,
 }) {
   const [showAdd, setShowAdd] = useState(false);
@@ -33,11 +33,11 @@ export default function RosterView({
   const rows = useMemo(() => {
     return filtered.map((n) => {
       const entries = entriesByNurse[n.id] || {};
-      const lm = latestMonth(entries);
-      const ytd = annualAvg(entries);
+      const lm = latestMonth(entries, year);
+      const ytd = annualAvg(entries, year);
       let bonusOK = 0, bonusScored = 0;
       for (let qi = 1; qi <= 4; qi++) {
-        const qa = quarterAvg(entries, qi);
+        const qa = quarterAvg(entries, year, qi);
         if (qa.count > 0) { bonusScored++; if (isBonusEligible(qa.avg)) bonusOK++; }
       }
       const [avaBg, avaFg] = avatarColors(n.id);
@@ -57,7 +57,7 @@ export default function RosterView({
         statusStyle: statusPillStyle(ytd, statusOK),
       };
     });
-  }, [filtered, entriesByNurse, managerName]);
+  }, [filtered, entriesByNurse, year, managerName]);
 
   const onAddNurse = async () => {
     if (!newName.trim()) { setAddError('Enter a nurse name.'); return; }

@@ -1,18 +1,18 @@
 'use client';
 
 import { useMemo } from 'react';
-import { fmt, pillStyle, initials, avatarColors, quarterAvg, isBonusEligible, YEAR } from '@/lib/scoring';
+import { fmt, pillStyle, initials, avatarColors, quarterAvg, isBonusEligible } from '@/lib/scoring';
 
 const QUARTER_LABELS = ['', 'Jan–Mar', 'Apr–Jun', 'Jul–Sep', 'Oct–Dec'];
 
-export default function BonusReportView({ nurses, entriesByNurse, scopeLabel, bonusQuarter, onQuarterChange, managerName }) {
+export default function BonusReportView({ nurses, entriesByNurse, year, scopeLabel, bonusQuarter, onQuarterChange, managerName }) {
   const bq = Number(bonusQuarter);
 
   const rows = useMemo(() => {
     let el = 0, not = 0, pend = 0;
     const list = nurses.map((n) => {
       const entries = entriesByNurse[n.id] || {};
-      const qa = quarterAvg(entries, bq);
+      const qa = quarterAvg(entries, year, bq);
       const [avaBg, avaFg] = avatarColors(n.id);
       const has = qa.count > 0;
       const elig = has && isBonusEligible(qa.avg);
@@ -27,7 +27,7 @@ export default function BonusReportView({ nurses, entriesByNurse, scopeLabel, bo
       };
     }).sort((a, b) => b.sort - a.sort);
     return { list, el, not, pend };
-  }, [nurses, entriesByNurse, bq]);
+  }, [nurses, entriesByNurse, year, bq]);
 
   const onExport = () => {
     const esc = (v) => {
@@ -39,7 +39,7 @@ export default function BonusReportView({ nurses, entriesByNurse, scopeLabel, bo
     nurses
       .map((n) => {
         const entries = entriesByNurse[n.id] || {};
-        const qa = quarterAvg(entries, bq);
+        const qa = quarterAvg(entries, year, bq);
         const has = qa.count > 0;
         const elig = has && isBonusEligible(qa.avg);
         return {
@@ -60,7 +60,7 @@ export default function BonusReportView({ nurses, entriesByNurse, scopeLabel, bo
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `RN-Scorecard-Bonus-Q${bq}-${YEAR}.csv`;
+    a.download = `RN-Scorecard-Bonus-Q${bq}-${year}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();

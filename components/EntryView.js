@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import {
   METRICS, SCORE_OPTIONS, MONTH_NAMES, SCORE_KEY_COLS, SCORE_KEY,
-  YEAR, computeTotal, fmt, badge, entryId,
+  computeTotal, fmt, badge, entryId,
 } from '@/lib/scoring';
 import { saveEntry } from '@/lib/data';
 
@@ -23,7 +23,7 @@ function blankScores() {
   return s;
 }
 
-export default function EntryView({ nurses, entriesByNurse, uid, initialNurseId }) {
+export default function EntryView({ nurses, entriesByNurse, year, uid, initialNurseId }) {
   const [showKey, setShowKey] = useState(false);
   const [nurseId, setNurseId] = useState(initialNurseId || (nurses[0] && nurses[0].id) || '');
   const [month, setMonth] = useState('6');
@@ -39,7 +39,7 @@ export default function EntryView({ nurses, entriesByNurse, uid, initialNurseId 
 
   useEffect(() => {
     const entries = entriesByNurse[nurseId] || {};
-    const rec = entries[entryId(month)];
+    const rec = entries[entryId(year, month)];
     if (rec) {
       const next = {};
       METRICS.forEach((m) => { next[m.key] = String(rec.scores[m.key]); });
@@ -51,7 +51,7 @@ export default function EntryView({ nurses, entriesByNurse, uid, initialNurseId 
     }
     setSavedMsg('');
     setErrMsg('');
-  }, [nurseId, month, entriesByNurse]);
+  }, [nurseId, month, year, entriesByNurse]);
 
   const liveTotal = computeTotal(scores);
   const lb = badge(liveTotal);
@@ -71,7 +71,7 @@ export default function EntryView({ nurses, entriesByNurse, uid, initialNurseId 
     METRICS.forEach((m) => { rec[m.key] = scores[m.key] === 'NA' ? 'NA' : Number(scores[m.key]); });
     setSaving(true);
     try {
-      const total = await saveEntry({ nurseId, month, scores: rec, uid });
+      const total = await saveEntry({ nurseId, year, month, scores: rec, uid });
       const nurse = nurses.find((n) => n.id === nurseId);
       setExisted(true);
       setErrMsg('');
@@ -158,7 +158,7 @@ export default function EntryView({ nurses, entriesByNurse, uid, initialNurseId 
               </select>
             </div>
             <div>
-              <label style={fieldLabel}>Month · {YEAR}</label>
+              <label style={fieldLabel}>Month · {year}</label>
               <select value={month} onChange={(e) => setMonth(e.target.value)} style={selectBase}>
                 {MONTH_NAMES.map((nm, i) => <option key={i} value={String(i + 1)}>{nm}</option>)}
               </select>

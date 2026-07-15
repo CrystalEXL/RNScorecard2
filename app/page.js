@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useAuth, signOutUser } from '@/lib/useAuth';
 import { useManagers, useNurses, useEntriesByYear } from '@/lib/data';
+import { DEFAULT_YEAR } from '@/lib/scoring';
 import SignInScreen from '@/components/SignInScreen';
 import Header from '@/components/Header';
 import RosterView from '@/components/RosterView';
@@ -43,7 +44,8 @@ export default function Page() {
 function App({ uid }) {
   const managers = useManagers();
   const { nurses, loaded: nursesLoaded } = useNurses();
-  const entriesByNurse = useEntriesByYear();
+  const [year, setYear] = useState(DEFAULT_YEAR);
+  const entriesByNurse = useEntriesByYear(year);
 
   const [view, setView] = useState('roster');
   const [managerId, setManagerId] = useState('all');
@@ -65,13 +67,14 @@ function App({ uid }) {
 
   return (
     <div>
-      <Header managers={managers} managerId={managerId} onManagerChange={setManagerId} view={view} onNavigate={setView} />
+      <Header managers={managers} managerId={managerId} onManagerChange={setManagerId} view={view} onNavigate={setView} year={year} onYearChange={setYear} />
       <main style={{ maxWidth: '1220px', margin: '0 auto', padding: '30px 28px 70px' }}>
         {view === 'roster' && (
           <RosterView
             nurses={scopeNurses}
             managers={managers}
             entriesByNurse={entriesByNurse}
+            year={year}
             managerName={managerName}
             scopeLabel={scopeLabel}
             search={search}
@@ -87,6 +90,7 @@ function App({ uid }) {
           <EntryView
             nurses={scopeNurses.length ? scopeNurses : nurses}
             entriesByNurse={entriesByNurse}
+            year={year}
             uid={uid}
             initialNurseId={selectedNurseId}
           />
@@ -97,6 +101,7 @@ function App({ uid }) {
             nurse={selectedNurse}
             nurses={scopeNurses.length ? scopeNurses : nurses}
             entries={entriesByNurse[selectedNurse.id] || {}}
+            year={year}
             managerName={managerName}
             onBack={() => setView('roster')}
             onSwitchNurse={(id) => setSelectedNurseId(id)}
@@ -110,6 +115,7 @@ function App({ uid }) {
           <BonusReportView
             nurses={scopeNurses}
             entriesByNurse={entriesByNurse}
+            year={year}
             scopeLabel={scopeLabel}
             bonusQuarter={bonusQuarter}
             onQuarterChange={setBonusQuarter}
