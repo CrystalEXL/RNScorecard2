@@ -1,9 +1,11 @@
 'use client';
 
 import {
-  METRICS, MONTH_NAMES, fmt, rawFmt, colorFor, pillStyle, initials, avatarColors,
+  METRICS, PENALTIES, MONTH_NAMES, fmt, rawFmt, colorFor, penaltyColor, pillStyle, initials, avatarColors,
   quarterAvg, annualAvg, latestMonth, isBonusEligible, computeTotal, entryId,
 } from '@/lib/scoring';
+
+const BREAKDOWN_COLS = [...METRICS, ...PENALTIES];
 
 export default function NurseDashboardView({ nurse, nurses, entries, year, managerName, onBack, onSwitchNurse, onEditMonth }) {
   const [avaBg, avaFg] = avatarColors(nurse.id);
@@ -12,10 +14,15 @@ export default function NurseDashboardView({ nurse, nurses, entries, year, manag
     const mo = i + 1;
     const rec = entries[entryId(year, mo)];
     const total = rec ? (rec.total != null ? rec.total : computeTotal(rec.scores)) : null;
-    const cells = METRICS.map((m) => ({
-      txt: rec ? rawFmt(rec.scores[m.key]) : '—',
-      color: rec ? (rec.scores[m.key] === 'NA' ? '#98a09d' : colorFor(Number(rec.scores[m.key]))) : '#c4c8c2',
-    }));
+    const cells = BREAKDOWN_COLS.map((m) => {
+      const isPenalty = PENALTIES.some((p) => p.key === m.key);
+      return {
+        txt: rec ? rawFmt(rec.scores[m.key]) : '—',
+        color: rec
+          ? (rec.scores[m.key] === 'NA' ? '#98a09d' : (isPenalty ? penaltyColor(rec.scores[m.key]) : colorFor(Number(rec.scores[m.key]))))
+          : '#c4c8c2',
+      };
+    });
     return {
       mo,
       label: nm.slice(0, 3),
@@ -107,10 +114,10 @@ export default function NurseDashboardView({ nurse, nurses, entries, year, manag
             <thead>
               <tr style={{ background: '#FAF8F2', borderBottom: '1px solid #EBE6DB', color: '#7b847f', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '.04em' }}>
                 <th style={{ textAlign: 'left', padding: '11px 20px', fontWeight: 600 }}>Month</th>
-                {METRICS.map((m) => (
+                {BREAKDOWN_COLS.map((m) => (
                   <th key={m.key} style={{ textAlign: 'center', padding: '11px 8px', fontWeight: 600 }}>
                     {m.short}
-                    <div style={{ fontWeight: 500, color: '#b3b8b2', fontSize: '10px' }}>{m.weight}%</div>
+                    <div style={{ fontWeight: 500, color: '#b3b8b2', fontSize: '10px' }}>{m.weight != null ? `${m.weight}%` : '0/-1'}</div>
                   </th>
                 ))}
                 <th style={{ textAlign: 'center', padding: '11px 20px', fontWeight: 600, color: '#0E5B57' }}>Total</th>

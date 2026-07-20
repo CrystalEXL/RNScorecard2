@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
-  METRICS, SCORE_OPTIONS, MONTH_NAMES, SCORE_KEY_COLS, SCORE_KEY, PRODUCTIVITY_SCALE,
+  METRICS, PENALTIES, PENALTY_OPTIONS, SCORE_OPTIONS, MONTH_NAMES, SCORE_KEY_COLS, SCORE_KEY, PRODUCTIVITY_SCALE,
   computeTotal, fmt, badge, entryId,
 } from '@/lib/scoring';
 import { saveEntry, deleteEntry } from '@/lib/data';
@@ -17,9 +17,11 @@ const fieldLabel = {
   textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '7px',
 };
 
+const ALL_FIELDS = [...METRICS, ...PENALTIES];
+
 function blankScores() {
   const s = {};
-  METRICS.forEach((m) => { s[m.key] = ''; });
+  ALL_FIELDS.forEach((m) => { s[m.key] = ''; });
   return s;
 }
 
@@ -47,7 +49,7 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
     const rec = entries[entryId(year, month)];
     if (rec) {
       const next = {};
-      METRICS.forEach((m) => { next[m.key] = String(rec.scores[m.key]); });
+      ALL_FIELDS.forEach((m) => { next[m.key] = String(rec.scores[m.key]); });
       setScores(next);
       setExisted(true);
     } else {
@@ -60,7 +62,7 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
 
   const liveTotal = computeTotal(scores);
   const lb = badge(liveTotal);
-  const liveBadgeLabel = liveTotal == null ? 'Complete all 6 metrics' : (liveTotal >= 3.5 ? 'Bonus eligible pace' : 'Below bonus threshold');
+  const liveBadgeLabel = liveTotal == null ? 'Complete all fields' : (liveTotal >= 3.5 ? 'Bonus eligible pace' : 'Below bonus threshold');
   const liveColor = liveTotal == null ? '#5f7a78' : (liveTotal >= 4.5 ? '#7BD6A0' : liveTotal >= 3.5 ? '#8FD3CE' : liveTotal >= 3 ? '#E0B96B' : '#E39A8C');
   const liveBadgeStyle = liveTotal == null
     ? { display: 'inline-block', marginTop: '14px', padding: '5px 12px', borderRadius: '8px', background: '#33504f', color: '#9fb2b0', fontSize: '12.5px', fontWeight: 600 }
@@ -69,11 +71,11 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
       : { display: 'inline-block', marginTop: '14px', padding: '5px 12px', borderRadius: '8px', background: '#4d2c26', color: '#E39A8C', fontSize: '12.5px', fontWeight: 600 });
 
   const onSave = async () => {
-    for (const m of METRICS) {
+    for (const m of ALL_FIELDS) {
       if (!scores[m.key]) { setErrMsg('Please score every metric before saving.'); setSavedMsg(''); return; }
     }
     const rec = {};
-    METRICS.forEach((m) => { rec[m.key] = scores[m.key] === 'NA' ? 'NA' : Number(scores[m.key]); });
+    ALL_FIELDS.forEach((m) => { rec[m.key] = scores[m.key] === 'NA' ? 'NA' : Number(scores[m.key]); });
     setSaving(true);
     try {
       const total = await saveEntry({ nurseId, year, month, scores: rec, uid });
@@ -247,7 +249,7 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
         </button>
       </div>
       <p style={{ margin: '6px 0 20px', color: '#6b7674', fontSize: '14px' }}>
-        Score each metric 1–5 (or NA). The monthly total is the weighted average, calculated automatically.
+        Score each metric 1–5 (or NA), then set Compliance and Timeliness to 0 or -1. The total is the weighted average of the 5 metrics, plus the deductions, calculated automatically.
         {showKey && ' The scoring key is open on the left for reference.'}
       </p>
 
@@ -289,6 +291,26 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
                   >
                     <option value="">—</option>
                     {SCORE_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #F0ECE2', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#7b847f', textTransform: 'uppercase', letterSpacing: '.05em' }}>Deductions</div>
+              {PENALTIES.map((p) => (
+                <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: '14px', color: '#1B2A2C' }}>{p.label}</div>
+                    <div style={{ fontSize: '12px', color: '#98a09d' }}>0 = none, -1 = deducted from total</div>
+                  </div>
+                  <select
+                    value={scores[p.key] || ''}
+                    onChange={(e) => { setScores((s) => ({ ...s, [p.key]: e.target.value })); setSavedMsg(''); setErrMsg(''); }}
+                    style={{ width: '110px', padding: '11px 12px', border: '1.5px solid #ded7c8', borderRadius: '10px', background: '#fff', fontSize: '15px', fontFamily: "'Space Grotesk'", fontWeight: 500, outline: 'none', cursor: 'pointer', textAlign: 'center' }}
+                  >
+                    <option value="">—</option>
+                    {PENALTY_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                   </select>
                 </div>
               ))}
