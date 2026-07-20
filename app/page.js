@@ -57,8 +57,10 @@ function App({ uid }) {
 
   const managerName = (id) => managers.find((m) => m.id === id)?.name || '—';
   const scopeLabel = managerId === 'all' ? 'All managers' : managerName(managerId);
+  const byName = (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+  const nursesSorted = useMemo(() => [...nurses].sort(byName), [nurses]);
   const scopeNurses = useMemo(
-    () => nurses.filter((n) => managerId === 'all' || n.managerId === managerId),
+    () => nurses.filter((n) => managerId === 'all' || n.managerId === managerId).sort(byName),
     [nurses, managerId]
   );
 
@@ -102,7 +104,7 @@ function App({ uid }) {
 
         {view === 'entry' && (
           <EntryView
-            nurses={scopeNurses.length ? scopeNurses : nurses}
+            nurses={scopeNurses.length ? scopeNurses : nursesSorted}
             entriesByNurse={entriesByNurse}
             year={year}
             uid={uid}
@@ -114,7 +116,7 @@ function App({ uid }) {
         {view === 'nurse' && selectedNurse && (
           <NurseDashboardView
             nurse={selectedNurse}
-            nurses={scopeNurses.length ? scopeNurses : nurses}
+            nurses={scopeNurses.length ? scopeNurses : nursesSorted}
             entries={entriesByNurse[selectedNurse.id] || {}}
             year={year}
             managerName={managerName}
