@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
-  METRICS, PENALTIES, PENALTY_OPTIONS, SCORE_OPTIONS, MONTH_NAMES, SCORE_KEY_COLS, SCORE_KEY, PRODUCTIVITY_SCALE,
+  METRICS, PENALTIES, PENALTY_OPTIONS, PENALTY_KEY, SCORE_OPTIONS, MONTH_NAMES, SCORE_KEY_COLS, SCORE_KEY, PRODUCTIVITY_SCALE,
   computeTotal, fmt, badge, entryId,
 } from '@/lib/scoring';
 import { saveEntry, deleteEntry } from '@/lib/data';
@@ -196,6 +196,33 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
                   </tr>
                 );
               })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style={{ background: '#fff', border: '1px solid #E7E2D8', borderRadius: '14px', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #EBE6DB' }}>
+          <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '15px' }}>Deductions Key</div>
+          <div style={{ fontSize: '12.5px', color: '#98a09d', marginTop: '3px' }}>Criteria behind each deduction category's 0 or -1.</div>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '520px' }}>
+            <thead>
+              <tr style={{ background: '#FAF8F2', borderBottom: '1px solid #EBE6DB', color: '#7b847f', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                <th style={{ padding: '10px 16px', textAlign: 'left' }}>Category</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left' }}>0 (no deduction)</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left' }}>-1 (deducted)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {PENALTY_KEY.map((row) => (
+                <tr key={row.key} style={{ borderBottom: '1px solid #F2EEE4' }}>
+                  <td style={{ padding: '10px 16px', fontWeight: 600, color: '#1B2A2C', verticalAlign: 'top' }}>{row.label}</td>
+                  <td style={{ padding: '10px 12px', color: '#4b5654', verticalAlign: 'top' }}>{row.zero}</td>
+                  <td style={{ padding: '10px 12px', color: '#4b5654', verticalAlign: 'top' }}>{row.minusOne}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
