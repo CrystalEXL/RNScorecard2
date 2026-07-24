@@ -30,6 +30,7 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
   const [nurseId, setNurseId] = useState(initialNurseId || (nurses[0] && nurses[0].id) || '');
   const [month, setMonth] = useState(() => (initialMonth != null ? String(initialMonth) : String(new Date().getMonth() + 1)));
   const [scores, setScores] = useState(blankScores());
+  const [onLeave, setOnLeave] = useState(false);
   const [existed, setExisted] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
   const [errMsg, setErrMsg] = useState('');
@@ -52,17 +53,21 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
       ALL_FIELDS.forEach((m) => { next[m.key] = String(rec.scores[m.key]); });
       setScores(next);
       setExisted(true);
+      setOnLeave(!!rec.onLeave);
     } else {
       setScores(blankScores());
       setExisted(false);
+      setOnLeave(false);
     }
     setSavedMsg('');
     setErrMsg('');
   }, [nurseId, month, year, entriesByNurse]);
 
-  const liveTotal = computeTotal(scores);
+  const liveTotal = onLeave ? null : computeTotal(scores);
   const lb = badge(liveTotal);
-  const liveBadgeLabel = liveTotal == null ? 'Complete all fields' : (liveTotal >= 3.5 ? 'Bonus eligible pace' : 'Below bonus threshold');
+  const liveBadgeLabel = onLeave
+    ? 'On leave — no score this month'
+    : (liveTotal == null ? 'Complete all fields' : (liveTotal >= 3.5 ? 'Bonus eligible pace' : 'Below bonus threshold'));
   const liveColor = liveTotal == null ? '#5f7a78' : (liveTotal >= 4.5 ? '#7BD6A0' : liveTotal >= 3.5 ? '#8FD3CE' : liveTotal >= 3 ? '#E0B96B' : '#E39A8C');
   const liveBadgeStyle = liveTotal == null
     ? { display: 'inline-block', marginTop: '14px', padding: '5px 12px', borderRadius: '8px', background: '#33504f', color: '#9fb2b0', fontSize: '12.5px', fontWeight: 600 }
@@ -70,19 +75,36 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
       ? { display: 'inline-block', marginTop: '14px', padding: '5px 12px', borderRadius: '8px', background: '#1c4d3a', color: '#8FE3B8', fontSize: '12.5px', fontWeight: 600 }
       : { display: 'inline-block', marginTop: '14px', padding: '5px 12px', borderRadius: '8px', background: '#4d2c26', color: '#E39A8C', fontSize: '12.5px', fontWeight: 600 });
 
+  const onToggleLeave = () => {
+    setOnLeave((v) => !v);
+    setSavedMsg('');
+    setErrMsg('');
+  };
+
   const onSave = async () => {
-    for (const m of ALL_FIELDS) {
-      if (!scores[m.key]) { setErrMsg('Please score every metric before saving.'); setSavedMsg(''); return; }
+    let rec;
+    if (onLeave) {
+      rec = {};
+      METRICS.forEach((m) => { rec[m.key] = 'NA'; });
+      PENALTIES.forEach((p) => { rec[p.key] = 0; });
+    } else {
+      for (const m of ALL_FIELDS) {
+        if (!scores[m.key]) { setErrMsg('Please score every metric before saving.'); setSavedMsg(''); return; }
+      }
+      rec = {};
+      ALL_FIELDS.forEach((m) => { rec[m.key] = scores[m.key] === 'NA' ? 'NA' : Number(scores[m.key]); });
     }
-    const rec = {};
-    ALL_FIELDS.forEach((m) => { rec[m.key] = scores[m.key] === 'NA' ? 'NA' : Number(scores[m.key]); });
     setSaving(true);
     try {
-      const total = await saveEntry({ nurseId, year, month, scores: rec, uid });
+      const total = await saveEntry({ nurseId, year, month, scores: rec, uid, onLeave });
       const nurse = nurses.find((n) => n.id === nurseId);
       setExisted(true);
       setErrMsg('');
-      setSavedMsg(`Saved — ${(nurse?.name || '').split(' ')[0]} scored ${fmt(total)} for ${MONTH_NAMES[Number(month) - 1]}.`);
+      setSavedMsg(
+        onLeave
+          ? `Saved — ${(nurse?.name || '').split(' ')[0]} marked on leave for ${MONTH_NAMES[Number(month) - 1]}.`
+          : `Saved — ${(nurse?.name || '').split(' ')[0]} scored ${fmt(total)} for ${MONTH_NAMES[Number(month) - 1]}.`
+      );
     } catch (e) {
       setErrMsg(e?.message || 'Could not save. Try again.');
     } finally {
@@ -92,6 +114,7 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
 
   const onClear = () => {
     setScores(blankScores());
+    setOnLeave(false);
     setSavedMsg('');
     setErrMsg('');
   };
@@ -105,6 +128,7 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
     try {
       await deleteEntry({ nurseId, year, month });
       setScores(blankScores());
+      setOnLeave(false);
       setExisted(false);
       setErrMsg('');
       setSavedMsg(`Deleted the scorecard for ${MONTH_NAMES[Number(month) - 1]} ${year}.`);
@@ -304,7 +328,13 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', background: '#FAF8F2', border: '1px solid #EBE6DB', borderRadius: '10px', marginBottom: '18px', cursor: 'pointer' }}>
+              <input type="checkbox" checked={onLeave} onChange={onToggleLeave} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+              <span style={{ fontSize: '13.5px', fontWeight: 600, color: '#1B2A2C' }}>Nurse was on leave this entire month</span>
+              <span style={{ fontSize: '12px', color: '#98a09d' }}>(marks all categories NA — excluded from scoring)</span>
+            </label>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', opacity: onLeave ? 0.45 : 1, pointerEvents: onLeave ? 'none' : 'auto' }}>
               {METRICS.map((m) => (
                 <div key={m.key} style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                   <div style={{ flex: 1 }}>
@@ -312,7 +342,8 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
                     <div style={{ fontSize: '12px', color: '#98a09d' }}>Weight {m.weight}%</div>
                   </div>
                   <select
-                    value={scores[m.key] || ''}
+                    value={onLeave ? 'NA' : (scores[m.key] || '')}
+                    disabled={onLeave}
                     onChange={(e) => { setScores((s) => ({ ...s, [m.key]: e.target.value })); setSavedMsg(''); setErrMsg(''); }}
                     style={{ width: '110px', padding: '11px 12px', border: '1.5px solid #ded7c8', borderRadius: '10px', background: '#fff', fontSize: '15px', fontFamily: "'Space Grotesk'", fontWeight: 500, outline: 'none', cursor: 'pointer', textAlign: 'center' }}
                   >
@@ -323,7 +354,7 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
               ))}
             </div>
 
-            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #F0ECE2', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #F0ECE2', display: 'flex', flexDirection: 'column', gap: '12px', opacity: onLeave ? 0.45 : 1, pointerEvents: onLeave ? 'none' : 'auto' }}>
               <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#7b847f', textTransform: 'uppercase', letterSpacing: '.05em' }}>Deductions</div>
               {PENALTIES.map((p) => (
                 <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -332,7 +363,8 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
                     <div style={{ fontSize: '12px', color: '#98a09d' }}>0 = none, -1 = deducted from total</div>
                   </div>
                   <select
-                    value={scores[p.key] || ''}
+                    value={onLeave ? '0' : (scores[p.key] || '')}
+                    disabled={onLeave}
                     onChange={(e) => { setScores((s) => ({ ...s, [p.key]: e.target.value })); setSavedMsg(''); setErrMsg(''); }}
                     style={{ width: '110px', padding: '11px 12px', border: '1.5px solid #ded7c8', borderRadius: '10px', background: '#fff', fontSize: '15px', fontFamily: "'Space Grotesk'", fontWeight: 500, outline: 'none', cursor: 'pointer', textAlign: 'center' }}
                   >

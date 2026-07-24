@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import {
-  fmt, pillStyle, initials, avatarColors, annualAvg, latestMonth, quarterAvg, isBonusEligible,
+  fmt, pillStyle, initials, avatarColors, annualAvg, latestMonth, quarterAvg, isBonusEligible, round1,
 } from '@/lib/scoring';
 import { addNurse, deactivateNurse, updateNurseManager } from '@/lib/data';
 
@@ -40,10 +40,11 @@ export default function RosterView({
       let bonusOK = 0, bonusScored = 0;
       for (let qi = 1; qi <= 4; qi++) {
         const qa = quarterAvg(entries, year, qi);
-        if (qa.count > 0) { bonusScored++; if (isBonusEligible(qa.avg)) bonusOK++; }
+        if (qa.count > 0 || qa.naCount >= 2) { bonusScored++; if (isBonusEligible(qa.avg, qa.naCount)) bonusOK++; }
       }
       const [avaBg, avaFg] = avatarColors(n.id);
-      const statusOK = ytd != null && ytd >= 3.5;
+      const ytdRounded = round1(ytd);
+      const statusOK = ytdRounded != null && ytdRounded >= 3.5;
       return {
         id: n.id,
         name: n.name,

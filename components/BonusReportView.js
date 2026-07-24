@@ -14,8 +14,8 @@ export default function BonusReportView({ nurses, entriesByNurse, year, scopeLab
       const entries = entriesByNurse[n.id] || {};
       const qa = quarterAvg(entries, year, bq);
       const [avaBg, avaFg] = avatarColors(n.id);
-      const has = qa.count > 0;
-      const elig = has && isBonusEligible(qa.avg);
+      const has = qa.count > 0 || qa.naCount >= 2;
+      const elig = has && isBonusEligible(qa.avg, qa.naCount);
       if (!has) pend++; else if (elig) el++; else not++;
       return {
         sort: has ? qa.avg : -1,
@@ -40,8 +40,8 @@ export default function BonusReportView({ nurses, entriesByNurse, year, scopeLab
       .map((n) => {
         const entries = entriesByNurse[n.id] || {};
         const qa = quarterAvg(entries, year, bq);
-        const has = qa.count > 0;
-        const elig = has && isBonusEligible(qa.avg);
+        const has = qa.count > 0 || qa.naCount >= 2;
+        const elig = has && isBonusEligible(qa.avg, qa.naCount);
         return {
           name: n.name,
           manager: managerName(n.managerId),

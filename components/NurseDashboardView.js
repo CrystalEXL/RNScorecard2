@@ -36,13 +36,16 @@ export default function NurseDashboardView({ nurse, nurses, entries, year, manag
 
   const quarters = [1, 2, 3, 4].map((qi) => {
     const qa = quarterAvg(entries, year, qi);
-    const elig = isBonusEligible(qa.avg);
-    const has = qa.count > 0;
+    const elig = isBonusEligible(qa.avg, qa.naCount);
+    const has = qa.count > 0 || qa.naCount >= 2;
+    const monthsLabel = qa.naCount >= 2
+      ? `${qa.naCount} months on leave`
+      : (qa.count > 0 ? `${qa.count} of 3 months` : 'Not scored');
     return {
       label: 'Q' + qi,
       avg: fmt(qa.avg),
       color: colorFor(qa.avg),
-      monthsLabel: has ? `${qa.count} of 3 months` : 'Not scored',
+      monthsLabel,
       badge: !has ? '—' : (elig ? 'Bonus' : 'No bonus'),
       badgeStyle: !has
         ? { padding: '3px 9px', borderRadius: '20px', background: '#EDEAE1', color: '#98a09d', fontSize: '11px', fontWeight: 600 }
@@ -62,7 +65,7 @@ export default function NurseDashboardView({ nurse, nurses, entries, year, manag
   let bonusCount = 0, qtrCount = 0;
   for (let qi = 1; qi <= 4; qi++) {
     const qa = quarterAvg(entries, year, qi);
-    if (qa.count > 0) { qtrCount++; if (isBonusEligible(qa.avg)) bonusCount++; }
+    if (qa.count > 0 || qa.naCount >= 2) { qtrCount++; if (isBonusEligible(qa.avg, qa.naCount)) bonusCount++; }
   }
   const lm = latestMonth(entries, year);
   const ann = annualAvg(entries, year);
