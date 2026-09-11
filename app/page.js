@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useAuth, signOutUser } from '@/lib/useAuth';
-import { useManagers, useNurses, useEntriesByYear } from '@/lib/data';
+import { useManagers, useNurses, useFormerNurses, useEntriesByYear } from '@/lib/data';
 import { DEFAULT_YEAR } from '@/lib/scoring';
 import SignInScreen from '@/components/SignInScreen';
 import Header from '@/components/Header';
@@ -44,6 +44,7 @@ export default function Page() {
 function App({ uid }) {
   const managers = useManagers();
   const { nurses, loaded: nursesLoaded, error: nursesError } = useNurses();
+  const { nurses: formerNurses } = useFormerNurses();
   const [year, setYear] = useState(DEFAULT_YEAR);
   const nurseIds = useMemo(() => nurses.map((n) => n.id), [nurses]);
   const { entriesByNurse, error: entriesError } = useEntriesByYear(nurseIds, year);
@@ -62,6 +63,10 @@ function App({ uid }) {
   const scopeNurses = useMemo(
     () => nurses.filter((n) => managerId === 'all' || n.managerId === managerId).sort(byName),
     [nurses, managerId]
+  );
+  const scopeFormerNurses = useMemo(
+    () => formerNurses.filter((n) => managerId === 'all' || n.managerId === managerId).sort(byName),
+    [formerNurses, managerId]
   );
 
   const openNurse = (id) => { setSelectedNurseId(id); setView('nurse'); };
@@ -88,6 +93,7 @@ function App({ uid }) {
         {view === 'roster' && (
           <RosterView
             nurses={scopeNurses}
+            formerNurses={scopeFormerNurses}
             managers={managers}
             entriesByNurse={entriesByNurse}
             year={year}

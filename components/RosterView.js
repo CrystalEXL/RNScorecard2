@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import {
   fmt, pillStyle, initials, avatarColors, annualAvg, latestMonth, quarterAvg, isBonusEligible, round1,
 } from '@/lib/scoring';
-import { addNurse, deactivateNurse, updateNurseManager, setNurseEndDate } from '@/lib/data';
+import { addNurse, deactivateNurse, updateNurseManager, setNurseEndDate, reactivateNurse } from '@/lib/data';
 
 const inputBase = {
   width: '100%',
@@ -17,16 +17,22 @@ const inputBase = {
 };
 
 export default function RosterView({
-  nurses, managers, entriesByNurse, year, managerName, scopeLabel,
+  nurses, formerNurses, managers, entriesByNurse, year, managerName, scopeLabel,
   search, onSearchChange, onOpenNurse, onGoEntry, currentManagerId, managerFilterId,
 }) {
   const [showAdd, setShowAdd] = useState(false);
+  const [showFormer, setShowFormer] = useState(false);
   const [newName, setNewName] = useState('');
   const [newManagerId, setNewManagerId] = useState(managerFilterId !== 'all' ? managerFilterId : '');
   const [addError, setAddError] = useState('');
   const [endDateFor, setEndDateFor] = useState(null);
   const [endDateValue, setEndDateValue] = useState('');
   const [endDateError, setEndDateError] = useState('');
+
+  const formerSorted = useMemo(
+    () => [...(formerNurses || [])].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
+    [formerNurses]
+  );
 
   const filtered = useMemo(() => {
     const s = (search || '').toLowerCase();
@@ -102,12 +108,20 @@ export default function RosterView({
     closeEndDate();
   };
 
+  const onReactivate = async (n) => {
+    if (window.confirm(`Move ${n.name} back to the active roster?`)) {
+      await reactivateNurse(n.id);
+    }
+  };
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '22px' }}>
         <div>
           <h2 style={{ fontFamily: "'Space Grotesk'", fontSize: '26px', fontWeight: 600, margin: '0 0 4px', letterSpacing: '-.02em' }}>Team Roster</h2>
-          <p style={{ margin: 0, color: '#6b7674', fontSize: '14px' }}>{filtered.length} nurses · {scopeLabel}</p>
+          <p style={{ margin: 0, color: '#6b7674', fontSize: '14px' }}>
+            {showFormer ? `${formerSorted.length} former staff · ${scopeLabel}` : `${filtered.length} nurses · ${scopeLabel}`}
+          </p>
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <div style={{ position: 'relative' }}>
@@ -124,8 +138,14 @@ export default function RosterView({
             />
           </div>
           <button
+            onClick={() => setShowFormer((v) => !v)}
+            style={{ display: 'flex', alignItems: 'center', gap: '7px', background: showFormer ? '#233B3C' : '#fff', color: showFormer ? '#fff' : '#4b5654', border: '1.5px solid #ded7c8', borderRadius: '10px', padding: '10px 15px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+          >
+            Former Staff{formerSorted.length ? ` (${formerSorted.length})` : ''}
+          </button>
+          <button
             onClick={() => setShowAdd((v) => !v)}
-            style={{ display: 'flex', alignItems: 'center', gap: '7px', background: '#fff', color: '#0E5B57', border: '1.5px solid #0E5B57', borderRadius: '10px', padding: '10px 15px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            style={{ display: showFormer ? 'none' : 'flex', alignItems: 'center', gap: '7px', background: '#fff', color: '#0E5B57', border: '1.5px solid #0E5B57', borderRadius: '10px', padding: '10px 15px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
@@ -136,7 +156,7 @@ export default function RosterView({
           </button>
           <button
             onClick={onGoEntry}
-            style={{ display: 'flex', alignItems: 'center', gap: '7px', background: '#0E5B57', color: '#fff', border: 'none', borderRadius: '10px', padding: '11px 16px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            style={{ display: showFormer ? 'none' : 'flex', alignItems: 'center', gap: '7px', background: '#0E5B57', color: '#fff', border: 'none', borderRadius: '10px', padding: '11px 16px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
               <path d="M12 5v14M5 12h14"></path>
@@ -180,21 +200,22 @@ export default function RosterView({
         </div>
       )}
 
-      <div style={{ background: '#fff', border: '1px solid #E7E2D8', borderRadius: '14px', overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', minWidth: '820px' }}>
-            <thead>
-              <tr style={{ background: '#FAF8F2', borderBottom: '1px solid #EBE6DB', color: '#7b847f', fontSize: '11.5px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                <th style={{ textAlign: 'left', padding: '13px 20px', fontWeight: 600 }}>Nurse</th>
-                <th style={{ textAlign: 'left', padding: '13px 12px', fontWeight: 600 }}>Manager</th>
-                <th style={{ textAlign: 'center', padding: '13px 12px', fontWeight: 600 }}>Latest</th>
-                <th style={{ textAlign: 'center', padding: '13px 12px', fontWeight: 600 }}>YTD Avg</th>
-                <th style={{ textAlign: 'center', padding: '13px 12px', fontWeight: 600 }}>Bonus Qtrs</th>
-                <th style={{ textAlign: 'left', padding: '13px 20px', fontWeight: 600 }}>Status</th>
-                <th style={{ padding: '13px 16px', fontWeight: 600 }}></th>
-              </tr>
-            </thead>
-            <tbody>
+      {!showFormer && (
+        <div style={{ background: '#fff', border: '1px solid #E7E2D8', borderRadius: '14px', overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', minWidth: '820px' }}>
+              <thead>
+                <tr style={{ background: '#FAF8F2', borderBottom: '1px solid #EBE6DB', color: '#7b847f', fontSize: '11.5px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                  <th style={{ textAlign: 'left', padding: '13px 20px', fontWeight: 600 }}>Nurse</th>
+                  <th style={{ textAlign: 'left', padding: '13px 12px', fontWeight: 600 }}>Manager</th>
+                  <th style={{ textAlign: 'center', padding: '13px 12px', fontWeight: 600 }}>Latest</th>
+                  <th style={{ textAlign: 'center', padding: '13px 12px', fontWeight: 600 }}>YTD Avg</th>
+                  <th style={{ textAlign: 'center', padding: '13px 12px', fontWeight: 600 }}>Bonus Qtrs</th>
+                  <th style={{ textAlign: 'left', padding: '13px 20px', fontWeight: 600 }}>Status</th>
+                  <th style={{ padding: '13px 16px', fontWeight: 600 }}></th>
+                </tr>
+              </thead>
+              <tbody>
               {rows.map((r) => {
                 const n = filtered.find((x) => x.id === r.id);
                 return (
@@ -245,7 +266,53 @@ export default function RosterView({
         {filtered.length === 0 && (
           <div style={{ padding: '44px', textAlign: 'center', color: '#98a09d', fontSize: '14px' }}>No nurses match your search.</div>
         )}
-      </div>
+        </div>
+      )}
+
+      {showFormer && (
+        <div style={{ background: '#fff', border: '1px solid #E7E2D8', borderRadius: '14px', overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', minWidth: '640px' }}>
+              <thead>
+                <tr style={{ background: '#FAF8F2', borderBottom: '1px solid #EBE6DB', color: '#7b847f', fontSize: '11.5px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                  <th style={{ textAlign: 'left', padding: '13px 20px', fontWeight: 600 }}>Nurse</th>
+                  <th style={{ textAlign: 'left', padding: '13px 12px', fontWeight: 600 }}>Manager</th>
+                  <th style={{ textAlign: 'left', padding: '13px 12px', fontWeight: 600 }}>End Date</th>
+                  <th style={{ padding: '13px 16px', fontWeight: 600 }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {formerSorted.map((n) => {
+                  const [avaBg, avaFg] = avatarColors(n.id);
+                  return (
+                    <tr key={n.id} style={{ borderBottom: '1px solid #F0ECE2' }}>
+                      <td style={{ padding: '13px 20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+                          <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: avaBg, color: avaFg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '13px', fontFamily: "'Space Grotesk'", flexShrink: 0, opacity: 0.6 }}>{initials(n.name)}</div>
+                          <div style={{ fontWeight: 600, color: '#6b7674' }}>{n.name}</div>
+                        </div>
+                      </td>
+                      <td style={{ padding: '13px 12px', color: '#98a09d' }}>{managerName(n.managerId)}</td>
+                      <td style={{ padding: '13px 12px', color: '#98a09d' }}>{n.endDate || '—'}</td>
+                      <td style={{ padding: '13px 16px', textAlign: 'right' }}>
+                        <button
+                          onClick={() => onReactivate(n)}
+                          style={{ background: 'transparent', color: '#0E5B57', border: '1.5px solid #0E5B57', borderRadius: '8px', padding: '6px 12px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                        >
+                          Reactivate
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {formerSorted.length === 0 && (
+            <div style={{ padding: '44px', textAlign: 'center', color: '#98a09d', fontSize: '14px' }}>No former staff · {scopeLabel}</div>
+          )}
+        </div>
+      )}
 
       {endDateFor && (
         <div
