@@ -146,6 +146,7 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
   const scoreKeyRows = METRICS.map((m) => ({
     label: m.label,
     weight: m.weight + '%',
+    note: m.note,
     cells: SCORE_KEY_COLS.map((c) => ({ v: (SCORE_KEY[m.key] && SCORE_KEY[m.key][c]) || '—' })),
   }));
 
@@ -172,8 +173,13 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
               {scoreKeyRows.map((row) => (
                 <tr key={row.label} style={{ borderBottom: '1px solid #F2EEE4' }}>
                   <td style={{ padding: '10px 16px' }}>
-                    <span style={{ fontWeight: 600, color: '#1B2A2C' }}>{row.label}</span>{' '}
-                    <span style={{ color: '#b3b8b2', fontSize: '12px' }}>{row.weight}</span>
+                    <div>
+                      <span style={{ fontWeight: 600, color: '#1B2A2C' }}>{row.label}</span>{' '}
+                      <span style={{ color: '#b3b8b2', fontSize: '12px' }}>{row.weight}</span>
+                    </div>
+                    {row.note && (
+                      <div style={{ color: '#98a09d', fontSize: '11.5px', marginTop: '2px' }}>{row.note}</div>
+                    )}
                   </td>
                   {row.cells.map((cell, i) => (
                     <td key={i} style={{ padding: '10px 5px', textAlign: 'center', fontFamily: "'Space Grotesk'", color: '#4b5654' }}>{cell.v}</td>
