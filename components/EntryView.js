@@ -348,7 +348,7 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
                     style={{ width: '110px', padding: '11px 12px', border: '1.5px solid #ded7c8', borderRadius: '10px', background: '#fff', fontSize: '15px', fontFamily: "'Space Grotesk'", fontWeight: 500, outline: 'none', cursor: 'pointer', textAlign: 'center' }}
                   >
                     <option value="">—</option>
-                    {SCORE_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                    {(m.options || SCORE_OPTIONS).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                   </select>
                 </div>
               ))}

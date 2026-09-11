@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import {
   fmt, pillStyle, initials, avatarColors, annualAvg, latestMonth, quarterAvg, isBonusEligible, round1,
 } from '@/lib/scoring';
-import { addNurse, deactivateNurse, updateNurseManager } from '@/lib/data';
+import { addNurse, deactivateNurse, updateNurseManager, setNurseEndDate } from '@/lib/data';
 
 const inputBase = {
   width: '100%',
@@ -24,6 +24,9 @@ export default function RosterView({
   const [newName, setNewName] = useState('');
   const [newManagerId, setNewManagerId] = useState(managerFilterId !== 'all' ? managerFilterId : '');
   const [addError, setAddError] = useState('');
+  const [endDateFor, setEndDateFor] = useState(null);
+  const [endDateValue, setEndDateValue] = useState('');
+  const [endDateError, setEndDateError] = useState('');
 
   const filtered = useMemo(() => {
     const s = (search || '').toLowerCase();
@@ -84,6 +87,19 @@ export default function RosterView({
   const onChangeManager = async (nurseId, managerId, e) => {
     e.stopPropagation();
     await updateNurseManager(nurseId, managerId);
+  };
+
+  const openEndDate = (n, e) => {
+    e.stopPropagation();
+    setEndDateFor(n);
+    setEndDateValue('');
+    setEndDateError('');
+  };
+  const closeEndDate = () => { setEndDateFor(null); setEndDateError(''); };
+  const onConfirmEndDate = async () => {
+    if (!endDateValue) { setEndDateError('Choose a date.'); return; }
+    await setNurseEndDate(endDateFor.id, endDateValue);
+    closeEndDate();
   };
 
   return (
@@ -207,6 +223,13 @@ export default function RosterView({
                     <td style={{ padding: '13px 12px', textAlign: 'center', fontFamily: "'Space Grotesk'", fontWeight: 500, color: '#4b5654' }}>{r.bonusQ}</td>
                     <td style={{ padding: '13px 20px' }}><span style={r.statusStyle}>{r.status}</span></td>
                     <td style={{ padding: '13px 16px', textAlign: 'right' }}>
+                      <button onClick={(e) => openEndDate(n, e)} title="Set end date (resignation)" style={{ background: 'transparent', border: 'none', color: '#b6bcb6', cursor: 'pointer', padding: '6px', borderRadius: '7px', display: 'inline-flex' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                          <path d="M16 2v4M8 2v4M3 10h18"></path>
+                          <path d="m9 16 6-6M9 10l6 6"></path>
+                        </svg>
+                      </button>
                       <button onClick={(e) => onRemove(n, e)} title="Remove nurse" style={{ background: 'transparent', border: 'none', color: '#b6bcb6', cursor: 'pointer', padding: '6px', borderRadius: '7px', display: 'inline-flex' }}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
@@ -223,6 +246,37 @@ export default function RosterView({
           <div style={{ padding: '44px', textAlign: 'center', color: '#98a09d', fontSize: '14px' }}>No nurses match your search.</div>
         )}
       </div>
+
+      {endDateFor && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(20,32,33,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', zIndex: 50 }}
+          onClick={closeEndDate}
+        >
+          <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '380px', background: '#F4F1EA', borderRadius: '16px', padding: '28px', boxShadow: '0 30px 70px rgba(0,0,0,.35)' }}>
+            <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: '19px', marginBottom: '4px' }}>Set end date</div>
+            <p style={{ margin: '0 0 20px', fontSize: '13.5px', color: '#6b7674' }}>
+              {endDateFor.name} will be hidden from the roster once an end date is entered. Their scores are kept, not deleted.
+            </p>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#7b847f', marginBottom: '6px' }}>End date</label>
+            <input
+              type="date"
+              value={endDateValue}
+              onChange={(e) => { setEndDateValue(e.target.value); setEndDateError(''); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') onConfirmEndDate(); }}
+              style={{ width: '100%', padding: '12px 14px', fontSize: '15px', border: '1.5px solid #d6cfbf', borderRadius: '10px', background: '#fff', outline: 'none', marginBottom: '6px' }}
+            />
+            {endDateError && <div style={{ color: '#A3331F', fontSize: '13px', fontWeight: 600, margin: '8px 0 0' }}>{endDateError}</div>}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              <button onClick={onConfirmEndDate} style={{ flex: 1, background: '#0E5B57', color: '#fff', border: 'none', borderRadius: '10px', padding: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
+                Confirm & Hide
+              </button>
+              <button onClick={closeEndDate} style={{ background: 'transparent', color: '#6b7674', border: '1.5px solid #ded7c8', borderRadius: '10px', padding: '12px 18px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
