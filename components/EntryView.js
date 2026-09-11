@@ -306,7 +306,7 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
         </button>
       </div>
       <p style={{ margin: '6px 0 20px', color: '#6b7674', fontSize: '14px' }}>
-        Score each metric 1–5 (or NA), then set Compliance and Timeliness to 0 or -1. The total is the weighted average of the 5 metrics, plus the deductions, calculated automatically.
+        Score each metric 2–5 (or NA), then set Compliance and Timeliness to 0 or -1. The total is the weighted average of the 5 metrics, plus the deductions, calculated automatically.
         {showKey && ' The scoring key is open on the left for reference.'}
       </p>
 
