@@ -53,7 +53,7 @@ function App({ uid }) {
   const [managerId, setManagerId] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedNurseId, setSelectedNurseId] = useState(null);
-  const [bonusQuarter, setBonusQuarter] = useState('2');
+  const [bonusQuarter, setBonusQuarter] = useState(() => String(Math.ceil((new Date().getMonth() + 1) / 3)));
   const [entryMonth, setEntryMonth] = useState(null);
 
   const managerName = (id) => managers.find((m) => m.id === id)?.name || '—';
