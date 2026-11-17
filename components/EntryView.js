@@ -31,6 +31,7 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
   const [month, setMonth] = useState(() => (initialMonth != null ? String(initialMonth) : String(new Date().getMonth() + 1)));
   const [scores, setScores] = useState(blankScores());
   const [onLeave, setOnLeave] = useState(false);
+  const [onPip, setOnPip] = useState(false);
   const [existed, setExisted] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
   const [errMsg, setErrMsg] = useState('');
@@ -54,10 +55,12 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
       setScores(next);
       setExisted(true);
       setOnLeave(!!rec.onLeave);
+      setOnPip(!!rec.onPip);
     } else {
       setScores(blankScores());
       setExisted(false);
       setOnLeave(false);
+      setOnPip(false);
     }
     setSavedMsg('');
     setErrMsg('');
@@ -81,6 +84,12 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
     setErrMsg('');
   };
 
+  const onTogglePip = () => {
+    setOnPip((v) => !v);
+    setSavedMsg('');
+    setErrMsg('');
+  };
+
   const onSave = async () => {
     let rec;
     if (onLeave) {
@@ -96,14 +105,14 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
     }
     setSaving(true);
     try {
-      const total = await saveEntry({ nurseId, year, month, scores: rec, uid, onLeave });
+      const total = await saveEntry({ nurseId, year, month, scores: rec, uid, onLeave, onPip });
       const nurse = nurses.find((n) => n.id === nurseId);
       setExisted(true);
       setErrMsg('');
       setSavedMsg(
         onLeave
           ? `Saved — ${(nurse?.name || '').split(' ')[0]} marked on leave for ${MONTH_NAMES[Number(month) - 1]}.`
-          : `Saved — ${(nurse?.name || '').split(' ')[0]} scored ${fmt(total)} for ${MONTH_NAMES[Number(month) - 1]}.`
+          : `Saved — ${(nurse?.name || '').split(' ')[0]} scored ${fmt(total)} for ${MONTH_NAMES[Number(month) - 1]}${onPip ? ' (active PIP)' : ''}.`
       );
     } catch (e) {
       setErrMsg(e?.message || 'Could not save. Try again.');
@@ -115,6 +124,7 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
   const onClear = () => {
     setScores(blankScores());
     setOnLeave(false);
+    setOnPip(false);
     setSavedMsg('');
     setErrMsg('');
   };
@@ -129,6 +139,7 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
       await deleteEntry({ nurseId, year, month });
       setScores(blankScores());
       setOnLeave(false);
+      setOnPip(false);
       setExisted(false);
       setErrMsg('');
       setSavedMsg(`Deleted the scorecard for ${MONTH_NAMES[Number(month) - 1]} ${year}.`);
@@ -334,10 +345,16 @@ export default function EntryView({ nurses, entriesByNurse, year, uid, initialNu
               </div>
             </div>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', background: '#FAF8F2', border: '1px solid #EBE6DB', borderRadius: '10px', marginBottom: '18px', cursor: 'pointer' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', background: '#FAF8F2', border: '1px solid #EBE6DB', borderRadius: '10px', marginBottom: '12px', cursor: 'pointer' }}>
               <input type="checkbox" checked={onLeave} onChange={onToggleLeave} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
               <span style={{ fontSize: '13.5px', fontWeight: 600, color: '#1B2A2C' }}>Nurse was on leave this entire month</span>
               <span style={{ fontSize: '12px', color: '#98a09d' }}>(marks all categories NA — excluded from scoring)</span>
+            </label>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', background: '#FAF8F2', border: '1px solid #EBE6DB', borderRadius: '10px', marginBottom: '18px', cursor: 'pointer' }}>
+              <input type="checkbox" checked={onPip} onChange={onTogglePip} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+              <span style={{ fontSize: '13.5px', fontWeight: 600, color: '#1B2A2C' }}>Active Performance Improvement Plan this month</span>
+              <span style={{ fontSize: '12px', color: '#98a09d' }}>(scores as usual — automatically ineligible for bonus this quarter)</span>
             </label>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', opacity: onLeave ? 0.45 : 1, pointerEvents: onLeave ? 'none' : 'auto' }}>

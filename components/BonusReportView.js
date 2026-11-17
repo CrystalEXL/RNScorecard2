@@ -15,14 +15,14 @@ export default function BonusReportView({ nurses, entriesByNurse, year, scopeLab
       const qa = quarterAvg(entries, year, bq);
       const [avaBg, avaFg] = avatarColors(n.id);
       const has = qa.count > 0 || qa.naCount >= 2;
-      const elig = has && isBonusEligible(qa.avg, qa.naCount);
+      const elig = has && isBonusEligible(qa.avg, qa.naCount, qa.pipCount);
       if (!has) pend++; else if (elig) el++; else not++;
       return {
         sort: has ? qa.avg : -1,
         id: n.id, name: n.name, initials: initials(n.name), avaBg, avaFg,
         months: has ? `${qa.count}/3` : '0/3',
         avg: fmt(qa.avg), avgStyle: pillStyle(qa.avg),
-        badge: !has ? 'Pending' : (elig ? 'Eligible' : 'Not eligible'),
+        badge: !has ? 'Pending' : (elig ? 'Eligible' : (qa.pipCount >= 1 ? 'Not eligible (PIP)' : 'Not eligible')),
         badgeStyle: badgeStyleFor(has, elig),
       };
     }).sort((a, b) => b.sort - a.sort);
@@ -41,13 +41,13 @@ export default function BonusReportView({ nurses, entriesByNurse, year, scopeLab
         const entries = entriesByNurse[n.id] || {};
         const qa = quarterAvg(entries, year, bq);
         const has = qa.count > 0 || qa.naCount >= 2;
-        const elig = has && isBonusEligible(qa.avg, qa.naCount);
+        const elig = has && isBonusEligible(qa.avg, qa.naCount, qa.pipCount);
         return {
           name: n.name,
           manager: managerName(n.managerId),
           months: has ? `${qa.count}/3` : '0/3',
           avg: qa.avg == null ? '' : fmt(qa.avg),
-          status: !has ? 'Pending' : (elig ? 'Eligible' : 'Not eligible'),
+          status: !has ? 'Pending' : (elig ? 'Eligible' : (qa.pipCount >= 1 ? 'Not eligible (PIP)' : 'Not eligible')),
           sort: has ? qa.avg : -1,
         };
       })

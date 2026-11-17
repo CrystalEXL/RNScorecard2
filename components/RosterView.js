@@ -49,7 +49,7 @@ export default function RosterView({
       let bonusOK = 0, bonusScored = 0;
       for (let qi = 1; qi <= 4; qi++) {
         const qa = quarterAvg(entries, year, qi);
-        if (qa.count > 0 || qa.naCount >= 2) { bonusScored++; if (isBonusEligible(qa.avg, qa.naCount)) bonusOK++; }
+        if (qa.count > 0 || qa.naCount >= 2) { bonusScored++; if (isBonusEligible(qa.avg, qa.naCount, qa.pipCount)) bonusOK++; }
       }
       const [avaBg, avaFg] = avatarColors(n.id);
       const ytdRounded = round1(ytd);
